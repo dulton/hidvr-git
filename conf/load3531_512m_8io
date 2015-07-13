@@ -1,0 +1,198 @@
+#!/bin/sh
+# Useage: ./load [ -r|-i|-a ][type]
+#         -r : rmmod all modules
+#         -i : insmod all modules
+#    default : rmmod all moules and then insmod them
+#        type: 16d1,16960h,4hd,8720p,8bt656,1hd12d1
+#
+
+JNDRV_DIR=./jn_module
+HIDRV_DIR=./hi_module
+
+PATH=/root/module/hi_tools:$PATH
+export PATH
+
+SDK_TYPE=none
+
+if [ $# -ge 2 ]; then
+    SDK_TYPE=$2
+fi
+
+report_error()
+{
+    echo "******* Error!! Shell exit for error *****"
+    exit 1
+}
+
+insert_juan()
+{
+    insmod $HIDRV_DIR/watchdog.ko
+
+    insmod $JNDRV_DIR/hi3515.ko
+    insmod $JNDRV_DIR/gpio_i2c.ko
+    insmod $JNDRV_DIR/gpio.ko
+
+    insmod $JNDRV_DIR/irda.ko
+    insmod $JNDRV_DIR/decoder.ko
+    insmod $JNDRV_DIR/rtc_pcf8563.ko
+
+    insmod $JNDRV_DIR/security.ko
+}
+
+remove_juan()
+{
+    rmmod $HIDRV_DIR/watchdog.ko
+
+    rmmod $JNDRV_DIR/security.ko
+
+    rmmod $JNDRV_DIR/irda.ko
+    rmmod $JNDRV_DIR/rtc_pcf8563.ko
+    rmmod $JNDRV_DIR/decoder.ko
+
+    rmmod $JNDRV_DIR/gpio.ko
+    rmmod $JNDRV_DIR/gpio_i2c.ko
+    rmmod $JNDRV_DIR/hi3515.ko
+}
+
+insert_audio()
+{
+    insmod $HIDRV_DIR/hidmac.ko
+    insmod $HIDRV_DIR/hi3531_sio.ko
+    insmod $HIDRV_DIR/hi3531_ai.ko
+    insmod $HIDRV_DIR/hi3531_ao.ko
+    insmod $HIDRV_DIR/hi3531_aenc.ko
+    insmod $HIDRV_DIR/hi3531_adec.ko
+}
+
+remove_audio()
+{
+    rmmod hi3531_adec
+    rmmod hi3531_aenc
+    rmmod hi3531_ao
+    rmmod hi3531_ai
+    rmmod hi3531_sio
+    rmmod hidmac
+}
+
+insert_ko()
+{
+    if [ $SDK_TYPE = "16d1" ]; then
+        sh $HIDRV_DIR/pinctrl_16D1_hi3531.sh > /dev/null
+    fi
+    
+    if [ $SDK_TYPE = "16960h" ]; then
+        sh $HIDRV_DIR/pinctrl_16X960H_hi3531.sh > /dev/null
+    fi
+    
+    if [ $SDK_TYPE = "4hd" ]; then
+        sh $HIDRV_DIR/pinctrl_4HD_hi3531.sh > /dev/null
+    fi
+    
+    if [ $SDK_TYPE = "8720p" ]; then
+        sh $HIDRV_DIR/pinctrl_8X720P_hi3531.sh > /dev/null
+    fi
+    
+    if [ $SDK_TYPE = "8bt656" ]; then
+        sh $HIDRV_DIR/pinctrl_8BT656_hi3531.sh > /dev/null
+    fi
+    
+    if [ $SDK_TYPE = "1hd12d1" ]; then
+        sh $HIDRV_DIR/pinctrl_1HD+12D1_hi3531.sh > /dev/null
+    fi
+    
+    sh $HIDRV_DIR/clkcfg_hi3531.sh > /dev/null
+
+    #insmod $HIDRV_DIR/mmz.ko mmz=anonymous,0,0x84000000,447M:ddr1,0,0xC0000000,511M anony=1 || report_error
+    insmod $HIDRV_DIR/mmz.ko mmz=anonymous,0,0x8A200000,350M:ddr1,0,0xC0000000,512M anony=1 || report_error
+    insmod $HIDRV_DIR/hiuser.ko
+    insmod $HIDRV_DIR/hi3531_base.ko
+    insmod $HIDRV_DIR/hi3531_sys.ko
+    insmod $HIDRV_DIR/hi3531_tde.ko g_pszTdeMmzName="ddr1" g_u32TdeTmpBufW=0 g_u32TdeTmpBufH=0
+    insmod $HIDRV_DIR/hi3531_dsu.ko
+    insmod $HIDRV_DIR/hi3531_venc.ko
+    insmod $HIDRV_DIR/hi3531_group.ko
+    insmod $HIDRV_DIR/hi3531_chnl.ko
+    insmod $HIDRV_DIR/hi3531_h264e.ko
+    insmod $HIDRV_DIR/hi3531_rc.ko
+    insmod $HIDRV_DIR/hi3531_jpege.ko
+    insmod $HIDRV_DIR/hi3531_mpeg4e.ko
+    insmod $HIDRV_DIR/hi3531_viu.ko detect_err_frame=1
+    insmod $HIDRV_DIR/hi3531_vou.ko
+    insmod $HIDRV_DIR/hi3531_vpss.ko
+    insmod $HIDRV_DIR/hi3531_region.ko
+    insmod $HIDRV_DIR/hi3531_ive.ko
+    insmod $HIDRV_DIR/hi3531_vda.ko
+    insmod $HIDRV_DIR/vcmp.ko
+    insmod $HIDRV_DIR/hifb.ko video=",hifb:vram1_size:4300,,,,," softcursor="off" apszLayerMmzNames=,,,,, u32VcmpBufNum=3
+    insmod $HIDRV_DIR/hi3531_vdec.ko
+    insmod $HIDRV_DIR/hi3531_vfmw.ko
+    insmod $HIDRV_DIR/hi3531_hdmi.ko
+    insmod $HIDRV_DIR/jpeg.ko
+
+    insert_audio
+
+    sh $HIDRV_DIR/sysctl_hi3531.sh > /dev/null
+}
+
+remove_ko()
+{
+    remove_audio
+    rmmod hifb
+    rmmod fb
+    rmmod vcmp
+    rmmod hi3531_hdmi
+    rmmod hi3531_vda
+    rmmod hi3531_ive
+    rmmod hi3531_region
+    rmmod hi3531_vpss
+    rmmod hi3531_vou
+    rmmod hi3531_viu
+    rmmod jpeg
+    rmmod hi3531_vfmw
+    rmmod hi3531_vdec
+    rmmod hi3531_jpege
+    rmmod hi3531_rc
+    rmmod hi3531_h264e
+    rmmod hi3531_mpeg4e
+    rmmod hi3531_chnl
+    rmmod hi3531_group
+    rmmod hi3531_venc
+    rmmod hi3531_dsu
+    rmmod hi3531_tde
+    rmmod hi3531_sys
+    rmmod hi3531_base
+    rmmod hiuser
+    rmmod mmz
+}
+
+# load module.
+if [ "$1" = "-ij" ]
+then
+    insert_juan
+fi
+
+if [ "$1" = "-rj" ]
+then
+    remove_juan
+fi
+
+
+if [ "$1" = "-i" ]
+then
+    insert_ko
+    insert_juan
+fi
+
+if [ "$1" = "-r" ]
+then
+    remove_juan
+    remove_ko
+fi
+
+if [ $# -eq 0 ] || [ "$1" = "-a" ]
+then
+    remove_juan
+    remove_ko
+    insert_ko
+    insert_juan
+fi

@@ -1,0 +1,116 @@
+#!/bin/sh
+# Useage: load [ -r ] [ -i ]
+#         -r : rmmod all modules
+#         -i : insmod all modules
+#    default : rmmod all moules and then insmod them
+#
+# It is release load script.
+
+EXTDRV_DIR=./extdrv/
+JNDRV_DIR=./jn_module
+HIFB_DIR=./
+TDE_DIR=./
+
+insert_ko()
+{
+
+#	insmod mmz.ko mmz=anonymous,0,0xC6000000,160M anony=1;
+	insmod mmz.ko mmz=anonymous,0,0xC3800000,72M anony=1;
+	insmod fb.ko
+	insmod hidmac.ko
+	insmod watchdog.ko
+
+	insmod $JNDRV_DIR/security.ko
+	insmod $JNDRV_DIR/hi3515.ko
+	insmod $JNDRV_DIR/gpio_i2c.ko
+	insmod $JNDRV_DIR/gpio.ko
+	insmod $JNDRV_DIR/irda.ko
+	insmod $JNDRV_DIR/decoder.ko
+	insmod $JNDRV_DIR/rtc_pcf8563.ko
+#	insmod hifb.ko video="hifb:vram0_size=962560,vram1_size=962560,vram2_size=811008,vram3_size=4096,vram4_size=811008"
+	insmod hifb.ko video="hifb:vram0_size=2621440,vram1_size=4096,vram2_size=831488,vram3_size=4096,vram4_size=4096"
+	insmod tde.ko
+	insmod hi3515_base.ko
+	insmod hi3515_sys.ko
+	insmod hi3515_dsu.ko
+	insmod hi3515_vd.ko
+	insmod hi3515_vou.ko
+	insmod hi3515_viu.ko
+	insmod hi3515_chnl.ko
+	insmod hi3515_vdec.ko nc_alg=1
+	insmod hi3515_venc.ko
+	insmod hi3515_group.ko
+	insmod hi3515_vpp.ko
+	insmod hi3515_md.ko
+	insmod hi3515_h264e.ko
+	insmod hi3515_h264d.ko
+	insmod hi3515_jpege.ko
+	insmod hi3515_jpegd.ko
+	insmod hi3515_sio.ko
+	insmod hi3515_ai.ko
+	insmod hi3515_ao.ko
+	insmod hi3515_aenc.ko
+	insmod hi3515_adec.ko
+
+
+}
+
+remove_ko()
+{
+
+	rmmod hi3515_adec
+	rmmod hi3515_aenc
+	rmmod hi3515_ai
+	rmmod hi3515_ao
+	rmmod hi3515_sio
+	rmmod hi3515_jpegd
+	rmmod hi3515_jpege
+	rmmod hi3515_h264d
+	rmmod hi3515_h264e
+	rmmod hi3515_md
+	rmmod hi3515_vpp
+	rmmod hi3515_vdec
+	rmmod hi3515_venc
+	rmmod hi3515_group
+	rmmod hi3515_chnl
+	rmmod hi3515_dsu
+	rmmod hi3515_vou
+	rmmod hi3515_vd
+	rmmod hi3515_viu
+	rmmod hi3515_sys
+	rmmod hi3515_base
+	rmmod hifb
+	rmmod tde
+
+	rmmod watchdog
+	rmmod rtc_pcf8563
+	rmmod decoder
+	rmmod gpio_i2c
+	rmmod keypad
+	rmmod irda
+	rmmod gpio
+	rmmod hi3515
+	rmmod hidmac
+	rmmod security
+}
+
+# Use "sh xxx" can execute script even it has no executable attribute.
+sh ./sysctl_hi3515.sh
+
+if [ "$1" = "-i" ]
+then
+	insert_ko
+fi
+
+if [ "$1" = "-r" ]
+then
+	remove_ko
+fi
+
+if [ $# -eq 0 ]
+then
+	remove_ko
+	insert_ko
+fi
+
+

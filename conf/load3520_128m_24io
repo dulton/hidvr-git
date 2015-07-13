@@ -1,0 +1,115 @@
+#!/bin/sh
+# Useage: load [ -r ] [ -i ]
+#         -r : rmmod all modules
+#         -i : insmod all modules
+#    default : rmmod all moules and then insmod them
+#
+# It is release load script.
+
+EXTDRV_DIR="$PWD/jn_module/"
+JNDRV_DIR=./jn_module
+HIFB_DIR="$PWD"
+TDE_DIR="$PWD"
+
+insert_ko()
+{
+    insmod mmz.ko mmz=anonymous,0,0xC2000000,250M:ddr16,0,0xE6800000,50M anony=1; #MMZ FOR NORMAL
+#    insmod mmz.ko mmz=anonymous,0,0xC2000000,224M:ddr16,0,0xE6800000,50M anony=1; #MMZ FOR NORMAL
+    #modprobe mmz mmz=anonymous,0,0xC4000000,192M anony=1; #MMZ FOR 1DDR
+    insmod fb.ko
+    insmod hidmac.ko
+    insmod watchdog.ko
+    insmod mcc_usrdev.ko
+
+    insmod $JNDRV_DIR/hi3515.ko
+    insmod $JNDRV_DIR/atp862x.ko
+    insmod $JNDRV_DIR/gpio_i2c.ko
+    insmod $JNDRV_DIR/gpio.ko
+    insmod $JNDRV_DIR/irda.ko
+    insmod $JNDRV_DIR/decoder.ko
+    insmod $JNDRV_DIR/rtc_pcf8563.ko
+    insmod $JNDRV_DIR/security.ko
+
+    #insmod $HIFB_DIR/hifb.ko video="hifb:vram0_size=4000000,vram1_size=2000000,vram2_size=2000000,vram3_size=4096,vram4_size=2000000" 
+    insmod $HIFB_DIR/hifb.ko video="hifb:vram0_size=2621440,vram1_size=4096,vram2_size=4096,vram3_size=831488,vram4_size=4096" 
+    #insmod $HIFB_DIR/hifb.ko video="hifb:vram0_size=2621440,vram1_size=2621440,vram2_size=811008,vram3_size=4096,vram4_size=811008" 
+    #insmod $HIFB_DIR/hifb.ko video="hifb:vram0_size=962560,vram1_size=962560,vram2_size=811008,vram3_size=4096,vram4_size=811008" 
+    insmod $TDE_DIR/tde.ko g_TdeArmChoice=0 g_TdeServiceChoice=1
+    insmod hi3520_base.ko
+    insmod hi3520_sys.ko
+    insmod hi3520_dsu.ko
+    insmod hi3520_vd.ko
+    insmod hi3520_vou.ko
+    insmod hi3520_viu.ko
+    insmod hi3520_chnl.ko
+    insmod hi3520_vdec.ko
+    insmod hi3520_venc.ko
+    insmod hi3520_group.ko
+    insmod hi3520_vpp.ko
+    insmod hi3520_md.ko
+    insmod hi3520_h264e.ko
+    insmod hi3520_h264d.ko
+    insmod hi3520_jpege.ko
+    insmod hi3520_jpegd.ko
+    insmod hi3520_sio.ko
+    insmod hi3520_ai.ko
+    insmod hi3520_ao.ko
+    insmod hi3520_aenc.ko
+    insmod hi3520_adec.ko
+}
+
+remove_ko()
+{
+    rmmod hi3520_adec
+    rmmod hi3520_aenc
+    rmmod hi3520_ai
+    rmmod hi3520_ao
+    rmmod hi3520_sio
+    rmmod hi3520_jpegd
+    rmmod hi3520_jpege
+    rmmod hi3520_h264d
+    rmmod hi3520_h264e
+    rmmod hi3520_md
+    rmmod hi3520_vpp
+    rmmod hi3520_vdec
+    rmmod hi3520_venc
+    rmmod hi3520_group
+    rmmod hi3520_vpp
+    rmmod hi3520_md
+    rmmod hi3520_chnl
+    rmmod hi3520_dsu
+    rmmod hi3520_vou
+    rmmod hi3520_vd
+    rmmod hi3520_viu
+    rmmod hi3520_sys
+    rmmod hi3520_base
+    rmmod hifb
+    rmmod tde
+    rmmod tw2865
+    rmmod adv_7441
+    rmmod gpioi2c
+    rmmod mcc_usrdev
+    rmmod hidmac
+    rmmod fb
+    rmmod mmz
+}
+
+#chmod +x ./sysctl_asic.sh
+./sysctl_asic.sh
+
+if [ "$1" = "-i" ]
+then
+	insert_ko
+fi
+
+if [ "$1" = "-r" ]
+then
+	remove_ko
+fi
+
+if [ $# -eq 0 ]
+then
+	remove_ko
+	insert_ko
+fi
+

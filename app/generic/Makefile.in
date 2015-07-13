@@ -1,0 +1,21 @@
+
+SOURCES = \
+	  generic.c \
+	  aval.c \
+	  uart.c \
+	  base64.c \
+	  ezxml.c \
+	  ifconf.c \
+	  ntp.c \
+	  md5sum.c \
+	  inifile.c \
+	  socket_rw.c \
+	  ucode.c \
+	  gpio.c \
+	  jsocket.c \
+
+INCLUDES = \
+
+
+LIBRARIES = \
+

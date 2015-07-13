@@ -1,0 +1,12 @@
+#!/bin/sh
+if [ -d .git ]
+then
+VER=`git svn info svn | grep "Revision:" | sed 's/Revision: //g'`
+else
+VER=`svn info | grep "Revision:" | sed 's/Revision: //g'`
+fi
+echo "set version '${VER}'"
+sed 's/"bet"/"'${VER}'"/g' conf/version.h > version.tmp
+mv version.tmp version.h
+cp conf/ui_sel.h ui_sel.h
+

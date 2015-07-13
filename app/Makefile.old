@@ -1,0 +1,71 @@
+
+include ../plat.mk
+include ../Makefile.param
+
+DONGLE_PATH := $(PRJ_PATH)/app/dongle
+
+REBUILD_PATH := $(CURDIR)/rebuild
+REBUILD_LIB := $(REBUILD_PATH)/librebuild.a
+
+ifeq "$(SDK_PLAT)" "HI3515"
+DONGLE_MODULE := $(DONGLE_PATH)/libDongle.a
+endif
+ifeq "$(SDK_PLAT)" "HI3520"
+DONGLE_MODULE := $(DONGLE_PATH)/libDongle.a
+endif
+
+DEFS += -DLINUX=2 -DARM=$(SDK_PLAT) -DTRUE=1 -DFALSE=0
+LIBS += -lpthread -ldl -lm
+INCS += -I$(DONGLE_PATH) -I$(REBUILD_PATH)/include 
+SRCS := $(wildcard *.c) $(wildcard jn_sdk/*.c)
+OBJS := $(patsubst %.c,%.o, $(SRCS))
+
+TARGET := dvr_app
+RESET_APP := dvr_reset
+RESOURCE_APP := dvr_resource
+FIRMWARE_APP := dvr_firmware
+MKUENV_APP := mk_uboot_env
+
+
+CFLAGS += $(INCS) $(DEFS) $(SDK_FIX)
+LDFLAGS =
+LDFLAGS += $(REBUILD_LIB)
+#LDFLAGS += -L$(REBUILD_PATH) -lssl -lcrypto -lz
+LDFLAGS += -L$(HI_LIB_PATH) $(SDK_LIBS) $(LIBS)
+
+
+all:PREPARE $(REBUILD_LIB) $(TARGET) $(RESET_APP) $(RESOURCE_APP) $(FIRMWARE_APP) $(MKUENV_APP)
+
+PREPARE:
+	$(RM) avenc.o
+
+%.o:%.c
+	@$(CC) $(CFLAGS) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+sinclude $(OBJS:.o=.d)
+
+$(TARGET): $(OBJS) $(JUAN_LIB) $(DONGLE_MODULE)
+	echo $^
+	$(CC) $^ $(LDFLAGS) -o $@
+
+$(REBUILD_LIB):
+	make -C $(REBUILD_PATH)
+
+$(RESET_APP):$(JUAN_LIB)
+	$(CC) -I../common -Wall -g -O0 -DRESET_APP -DARM=$(SDK_PLAT) reset_app.c $(JUAN_LIB) $^ -o $@
+
+$(RESOURCE_APP):$(JUAN_LIB)
+	$(CC) -I../common -Wall -g -O0 -DRESOURCE_APP -DARM=$(SDK_PLAT) resource_app.c $(JUAN_LIB) $^ -o $@
+
+$(FIRMWARE_APP):
+	gcc -Wall -g -O0 -DMK_FIRMWARE_USE -DTRUE=1 -DFALSE=0 firmware.c md5sum.c $^ -o $@
+
+$(MKUENV_APP):
+	gcc -DMK_UBOOT_ENV mk_uboot_env.c -o $@
+
+$(DONGLE_MODULE):
+	make -C $(DONGLE_PATH)
+
+.PHONY: clean $(FIRMWARE_APP) $(MKUENV_APP) $(RESOURCE_APP) $(RESOURCE_APP)
+clean:
+	$(RM) $(OBJS) $(patsubst %.o,%.d,$(OBJS)) $(TARGET)
+	make -C $(DONGLE_PATH) clean

@@ -1,0 +1,71 @@
+
+include ../../plat.mk
+
+#cmd define
+RM := rm -rf
+ECHO := @echo
+LINK := ln -s
+CP := cp -av
+MKDIR := @mkdir -p
+MV := mv -v
+MKIMAGE := mkimage -A arm -O linux
+MAKE := make
+PRINTF := @printf "\033[32;1m\t%s\033[0m\n"
+
+#toolchain define
+CC    := $(PRJ_CROSS)gcc
+CXX   := $(PRJ_CROSS)g++
+AR    := $(PRJ_CROSS)ar
+STRIP := $(PRJ_CROSS)strip
+
+#dir define
+SELF_DIR := $(subst $(PWD)/,,$(CURDIR))
+SDK_DIR := $(PWD)/sdk_$(SDK_PLAT)
+DEBUG_DIR := $(PWD)/debug/$(SELF_DIR)
+LIB_DIR := $(PWD)/lib
+
+#src/obj/dep define
+SRC_TMP := $(wildcard *.c)
+SRC := $(foreach n,$(SRC_TMP), $(CURDIR)/$(n))
+
+OBJ_TMP := $(patsubst %.c,%.o,$(SRC_TMP))
+OBJ := $(foreach n,$(OBJ_TMP), $(DEBUG_DIR)/$(n))
+
+DEP_TMP := $(patsubst %.c,%.d,$(SRC_TMP))
+DEP := $(foreach n,$(DEP_TMP), $(DEBUG_DIR)/$(n))
+
+#incs/defs define
+INCS := -I$(CURDIR) \
+		-I$(PWD)/../common \
+		-I$(PWD)/include/base  \
+		-I$(PWD)/include/glib  \
+		-I$(SDK_DIR)/include \
+		-I$(PWD)/include/ \
+		-I$(CURDIR)/../
+DEFS := -DLINUX=2 -DARM=$(SDK_PLAT) -DTRUE=1 -DFALSE=0 -D_GNU_SOURCE
+
+#cflags define
+CFLAGS := -Wall -O0 -g3 $(SDK_FIX)
+
+#special target define
+all: $(LIB_DIR)/lib$(notdir $(CURDIR)).a
+
+$(LIB_DIR)/lib$(notdir $(CURDIR)).a: $(OBJ)
+	$(MKDIR) $(LIB_DIR)
+	$(PRINTF) "[LIB]AR  $@";$(AR) rcs $@ $(OBJ)
+
+#common target define
+ifneq ($(MAKECMDGOALS), clean)
+-include $(DEP)
+endif
+
+$(DEBUG_DIR)/%.d: %.c
+	$(MKDIR) $(DEBUG_DIR)
+	$(PRINTF) "[LIB]DEP $@";$(CC) -MM -MF"$@" -MT"$(@:.d=.o)" $(INCS) $(DEFS) $<
+
+$(DEBUG_DIR)/%.o: %.c
+	$(MKDIR) $(DEBUG_DIR)
+	$(PRINTF) "[LIB]CC  $@";$(CC) -c $(CFLAGS) $(INCS) $(DEFS) -o "$@" $<
+
+
+

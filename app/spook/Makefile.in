@@ -1,0 +1,11 @@
+
+SOURCES = \
+	  spook.c \
+
+
+INCLUDES = \
+	   ../../include 
+
+
+LIBRARIES = \
+

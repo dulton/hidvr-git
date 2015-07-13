@@ -1,0 +1,12 @@
+
+SOURCES = \
+	  rwlock.c \
+	  media_entry.c \
+	  media_pool.c \
+	  mediabuf.c \
+
+INCLUDES = \
+
+
+LIBRARIES = \
+

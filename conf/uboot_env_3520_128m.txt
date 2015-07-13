@@ -1,0 +1,37 @@
+bootdelay=1
+baudrate=115200
+bootfile="uImage"
+ethaddr=00:00:00:00:00:00
+slave_bootargs=mem=15M console=ttyAMA0,115200
+slave_autostart=1
+slave_kernel_addr=0x80100000
+slave_initrd_addr=0x80200000
+slave_boot_addr=0x800A0000
+slave_bootcmd=bootm e0300000 e0a00000
+jpeg_vga=0x80060000
+jpeg_pal=0x80070000
+ipaddr=192.168.1.10
+serverip=192.168.1.213
+gatewayip=192.168.1.1
+netmask=255.255.255.0
+stdin=serial
+stdout=serial
+stderr=serial
+verify=n
+merge_mac_to_bootargs=no
+bootargs=mem=72M console=ttyAMA0,115200 pcimod=host pciclksel=1 root=0100 mtdparts=physmap-flash.0:256K(B),128K(E),128K(L),128K(C),4480K(S),2048K(K),9216K(R) ramdisk_size=9216
+s1cmd1=buzzer 200 1
+s1cmd2=buzzer 55 2
+s1cmd3=usb start
+s1cmd4=fatload usb 0 0xe5000000 help.rom
+s2cmd1=protect off all
+s2cmd2=erase 0x800a0000 +0x460000
+s2cmd3=erase 0x80700000 +0x900000
+s2cmd4=erase 0x80500000 +0x200000
+s2cmd5=cp.b 0xe50e0000 0x800a0000 460000
+s2cmd6=cp.b 0xe5740000 0x80700000 900000
+s2cmd7=cp.b 0xe5540000 0x80500000 200000
+s2cmd8=buzzer 55 2
+s2cmd9=buzzer 500 1
+s2cmd10=buzzer 500 5
+bootcmd=logo;cp.b 0x80700000 0xe3000000 0x900000;bootm 0x80500000 0xe3000000;${s1cmd1};${s1cmd2};${s1cmd3};${s1cmd4};${s2cmd1};${s2cmd2};${s2cmd3};${s2cmd4};${s2cmd5};${s2cmd6};${s2cmd7};${s2cmd8};${s2cmd9};reset;

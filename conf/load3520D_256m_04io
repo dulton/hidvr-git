@@ -1,0 +1,191 @@
+#!/bin/sh
+# Useage: ./load [ -r|-i|-a ][type]
+#         -r : rmmod all modules
+#         -i : insmod all modules
+#    default : rmmod all moules and then insmod them
+#        type: 8xd1,8960h,1xhd,2x720p,1x720p+4xD1
+
+JNDRV_DIR=./jn_module
+HIDRV_DIR=./hi_module
+
+PATH=/root/module/hi_tools:$PATH
+export PATH
+
+SDK_TYPE=none
+
+if [ $# -ge 2 ]; then
+    SDK_TYPE=$2
+fi
+
+report_error()
+{
+    echo "******* Error!! Shell exit for error *****"
+    exit 1
+}
+
+insert_juan()
+{
+    insmod $HIDRV_DIR/watchdog.ko
+    insmod $HIDRV_DIR/hi_rtc.ko
+
+    insmod $JNDRV_DIR/hi3515.ko
+    insmod $JNDRV_DIR/gpio_i2c.ko
+    insmod $JNDRV_DIR/gpio.ko
+
+    insmod $JNDRV_DIR/irda.ko
+    insmod $JNDRV_DIR/decoder.ko
+}
+
+remove_juan()
+{
+    rmmod $HIDRV_DIR/watchdog.ko
+    rmmod $HIDRV_DIR/hi_rtc.ko
+
+    rmmod $JNDRV_DIR/security.ko
+
+    rmmod $JNDRV_DIR/irda.ko
+    rmmod $JNDRV_DIR/rtc_pcf8563.ko
+    rmmod $JNDRV_DIR/decoder.ko
+
+    rmmod $JNDRV_DIR/gpio.ko
+    rmmod $JNDRV_DIR/gpio_i2c.ko
+    rmmod $JNDRV_DIR/hi3515.ko
+}
+
+insert_audio()
+{
+    insmod $HIDRV_DIR/hi3520D_sio.ko
+    insmod $HIDRV_DIR/hi3520D_ai.ko
+    insmod $HIDRV_DIR/hi3520D_ao.ko
+    insmod $HIDRV_DIR/hi3520D_aenc.ko
+    insmod $HIDRV_DIR/hi3520D_adec.ko
+}
+
+remove_audio()
+{
+    rmmod hi3520D_adec
+    rmmod hi3520D_aenc
+    rmmod hi3520D_ao
+    rmmod hi3520D_ai
+    rmmod hi3520D_sio
+}
+
+insert_ko()
+{
+   if [ $SDK_TYPE = "8d1" ]; then
+       sh $HIDRV_DIR/pinmux_8D1_hi3520D.sh > /dev/null
+       sh $HIDRV_DIR/crgctrl_8D1_hi3520D.sh > /dev/null 
+   fi
+   
+   if [ $SDK_TYPE = "8960h" ]; then
+       sh $HIDRV_DIR/pinmux_8D1_hi3520D.sh > /dev/null
+       sh $HIDRV_DIR/crgctrl_8D1_hi3520D.sh > /dev/null 
+   fi
+   
+   if [ $SDK_TYPE = "1hd" ]; then
+       sh $HIDRV_DIR/pinmux_8D1_hi3520D.sh  > /dev/null
+       sh $HIDRV_DIR/crgctrl_1X1080P_hi3520D.sh > /dev/null 
+   fi
+   
+   if [ $SDK_TYPE = "2720p" ]; then
+       sh $HIDRV_DIR/pinmux_8D1_hi3520D.sh  > /dev/null
+       sh $HIDRV_DIR/crgctrl_2X720P_hi3520D.sh > /dev/null
+   fi
+   
+   if [ $SDK_TYPE = "1720p4d1" ]; then
+        sh $HIDRV_DIR/pinmux_8D1_hi3520D.sh  > /dev/null
+        sh $HIDRV_DIR/crgctrl_1XHD_4XD1_hi3520D.sh > /dev/null 
+   fi 
+
+   sh $HIDRV_DIR/crgctrl_8D1_hi3520D.sh > /dev/null
+
+#    insmod $HIDRV_DIR/mmz.ko mmz=anonymous,0,0x84000000,186M:jpeg,0,0x8fa00000,5M anony=1 || report_error
+    insmod $HIDRV_DIR/mmz.ko mmz=anonymous,0,0x86A00000,148M:jpeg,0,0x8FE00000,2M anony=1 || report_error
+    insmod $HIDRV_DIR/hiuser.ko
+    insmod $HIDRV_DIR/hi3520D_base.ko
+    insmod $HIDRV_DIR/hi3520D_sys.ko
+    insmod $HIDRV_DIR/hi3520D_tde.ko g_u32TdeTmpBufW=0 g_u32TdeTmpBufH=0
+    insmod $HIDRV_DIR/hi3520D_dsu.ko
+    insmod $HIDRV_DIR/hi3520D_venc.ko
+    insmod $HIDRV_DIR/hi3520D_group.ko
+    insmod $HIDRV_DIR/hi3520D_chnl.ko
+    insmod $HIDRV_DIR/hi3520D_h264e.ko
+    insmod $HIDRV_DIR/hi3520D_rc.ko
+    insmod $HIDRV_DIR/hi3520D_jpege.ko
+    insmod $HIDRV_DIR/hi3520D_viu.ko detect_err_frame=1
+    insmod $HIDRV_DIR/hi3520D_vou.ko
+    insmod $HIDRV_DIR/hi3520D_vpss.ko
+    insmod $HIDRV_DIR/hi3520D_ive.ko
+    insmod $HIDRV_DIR/hi3520D_vda.ko
+    insmod $HIDRV_DIR/hi3520D_region.ko
+    insmod $HIDRV_DIR/vcmp.ko
+    insmod $HIDRV_DIR/hifb.ko video="hifb:vram0_size:4300,vram2_size:4300" softcursor="off" u32VcmpBufNum=3
+    insmod $HIDRV_DIR/hi3520D_vdec.ko
+    insmod $HIDRV_DIR/hi3520D_vfmw.ko
+    insmod $HIDRV_DIR/hi3520D_hdmi.ko
+    insmod $HIDRV_DIR/jpeg.ko
+    
+    insert_audio
+    sh $HIDRV_DIR/sysctl_hi3520D.sh > /dev/null 
+}
+
+remove_ko()
+{
+    remove_audio
+    rmmod hifb
+    rmmod vcmp
+    rmmod hi3520D_region
+    rmmod hi3520D_ive
+    rmmod hi3520D_vda
+    rmmod hi3520D_vpss
+    rmmod hi3520D_vou
+    rmmod hi3520D_viu
+    rmmod jpeg
+    rmmod hi3520D_hdmi
+    rmmod hi3520D_vfmw
+    rmmod hi3520D_vdec
+    rmmod hi3520D_jpege
+    rmmod hi3520D_rc
+    rmmod hi3520D_h264e
+    rmmod hi3520D_chnl
+    rmmod hi3520D_group
+    rmmod hi3520D_venc
+    rmmod hi3520D_dsu
+    rmmod hi3520D_tde
+    rmmod hi3520D_sys
+    rmmod hi3520D_base
+    rmmod hiuser
+    rmmod mmz
+}
+
+# load module.
+if [ "$1" = "-ij" ]
+then
+    insert_juan
+fi
+
+if [ "$1" = "-rj" ]
+then
+    remove_juan
+fi
+
+
+if [ "$1" = "-i" ]
+then
+    insert_ko
+    insert_juan
+fi
+
+if [ "$1" = "-r" ]
+then
+    remove_juan
+    remove_ko
+fi
+
+if [ $# -eq 0 ] || [ "$1" = "-a" ]
+then
+    remove_juan
+    remove_ko
+    insert_ko
+    insert_juan
+fi

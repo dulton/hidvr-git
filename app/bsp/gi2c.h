@@ -1,0 +1,19 @@
+
+#ifndef _GPIO_I2C_H
+#define _GPIO_I2C_H
+
+#define ACK  0x00
+#define NACK 0x01
+
+typedef enum {
+    GPIO_I2C_INIT  = 0,
+	GPIO_I2C_START,
+	GPIO_I2C_STOP,
+	GPIO_I2C_SEND_BYTE,
+	GPIO_I2C_RECV_BYTE,
+	GPIO_I2C_SEND_ACK,
+	GPIO_I2C_WAIT_ACK
+} GPIO_I2C_IOCTL;
+
+#endif
+
