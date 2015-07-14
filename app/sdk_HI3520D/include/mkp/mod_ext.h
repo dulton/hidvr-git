@@ -40,7 +40,7 @@
 
 #define MAX_MPP_MODULES HI_ID_BUTT
 
-#define VERSION_MAGIC	20130304
+#define VERSION_MAGIC	20150403
 
 typedef struct hiMOD_NAME_S
 {

@@ -71,6 +71,9 @@ HI_S32 HI_MPI_VO_DisableSdTdeBypass(VO_DEV VoDev);
 HI_S32 HI_MPI_VO_SetChnAttr(VO_DEV VoDev, VO_CHN VoChn, const VO_CHN_ATTR_S *pstChnAttr);
 HI_S32 HI_MPI_VO_GetChnAttr(VO_DEV VoDev, VO_CHN VoChn, VO_CHN_ATTR_S *pstChnAttr);
 
+HI_S32 HI_MPI_VO_SetChnDisplayWindow(VO_DEV VoDev, VO_CHN VoChn, const RECT_S  *pstWindow);
+HI_S32 HI_MPI_VO_GetChnDisplayWindow(VO_DEV VoDev, VO_CHN VoChn, RECT_S  *pstWindow);
+
 HI_S32 HI_MPI_VO_SetChnDispPos(VO_DEV VoDev, VO_CHN VoChn, const POINT_S *pstDispPos);
 HI_S32 HI_MPI_VO_GetChnDispPos(VO_DEV VoDev, VO_CHN VoChn, POINT_S *pstDispPos);
 

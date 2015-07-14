@@ -56,6 +56,9 @@ HI_S32 HI_MPI_AI_DisableAnr(AUDIO_DEV AudioDevId, AI_CHN AiChn);
 
 HI_S32 HI_MPI_AI_GetFd(AUDIO_DEV AudioDevId, AI_CHN AiChn);
 
+HI_S32 HI_MPI_AI_SetHpfAttr(AUDIO_DEV AiDevId, AI_CHN AiChn, AI_HPF_ATTR_S *pstHpfAttr);
+HI_S32 HI_MPI_AI_GetHpfAttr(AUDIO_DEV AiDevId, AI_CHN AiChn, AI_HPF_ATTR_S *pstHpfAttr);
+
 HI_S32 HI_MPI_AI_SetVqeAttr(AUDIO_DEV AiDevId, AI_CHN AiChn, AUDIO_DEV AoDevId, AO_CHN AoChn, AI_VQE_CONFIG_S *pstVqeConfig);
 HI_S32 HI_MPI_AI_GetVqeAttr(AUDIO_DEV AiDevId, AI_CHN AiChn, AI_VQE_CONFIG_S *pstVqeConfig);
 HI_S32 HI_MPI_AI_EnableVqe(AUDIO_DEV AiDevId, AI_CHN AiChn);

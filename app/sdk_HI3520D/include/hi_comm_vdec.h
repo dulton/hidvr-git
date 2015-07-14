@@ -209,6 +209,15 @@ typedef struct hiUSR_MEM_DESC_S
     HI_S32  Length;
 } USR_MEM_DESC_S;
 
+typedef enum hiVDEC_JPG_COLOR_FMT_E
+{
+    JPG_COLOR_FMT_YCBCR400 = 0,    /*YUV400*/
+    JPG_COLOR_FMT_YCBCR420 = 1,    /*YUV420*/
+    JPG_COLOR_FMT_YCBCR422BHP,     /*YUV 422 2x1*/  
+    JPG_COLOR_FMT_YCBCR422BVP,     /*YUV 422 1x2*/  
+    JPG_COLOR_FMT_YCBCR444,        /*YUV 444*/  
+    JPG_COLOR_FMT_BUTT             
+} VDEC_JPG_COLOR_FMT_E;
 
 typedef enum hiJPEGD_DECODE_ERROR_E
 {

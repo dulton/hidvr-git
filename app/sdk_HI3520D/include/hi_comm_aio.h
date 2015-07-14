@@ -270,6 +270,24 @@ typedef struct hiAI_ANR_CONFIG_S
     HI_S32 s32Reserved;
 } AI_ANR_CONFIG_S;
 
+/**Defines the configure parameters of HPF.*/
+typedef enum hiAUDIO_HPF_FREQ_E
+{
+    AUDIO_HPF_FREQ_80   = 80,    /* 80Hz */
+    AUDIO_HPF_FREQ_120  = 120,   /* 120Hz */
+    AUDIO_HPF_FREQ_150  = 150,   /* 150Hz */
+    AUDIO_HPF_FREQ_BUTT,
+} AUDIO_HPF_FREQ_E;
+
+typedef struct hiAI_HPF_CONFIG_S
+{
+    AUDIO_HPF_FREQ_E enHpfFreq; /*freq to be processed*/
+} AI_HPF_CONFIG_S;
+typedef struct hiAI_HPF_ATTR_S
+{
+    AI_HPF_CONFIG_S stHpfCfg;
+    HI_S32          bHpfOpen;
+} AI_HPF_ATTR_S;
 /**Defines the configure parameters of VQE.*/
 typedef struct hiAI_VQE_CONFIG_S
 {
@@ -289,6 +307,7 @@ typedef struct hiAI_VQE_INFO_S
 {
     AI_VQE_CONFIG_S         stVqeConfig;     /*vqe config*/
     HI_BOOL                 bVqeEnable;      /* vqe enable or disable */
+    HI_BOOL                 bHpfOpen;      /* vqe enable or disable */
 } AI_VQE_INFO_S;
 
 /**Defines the configure parameters of AI saving file.*/
