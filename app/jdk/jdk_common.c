@@ -213,6 +213,33 @@ JDK_BOOL JDK_GET_SIBLING_CHN(JDK_UINT32 thiz_chn, JDK_VI_MUX_MODE muxMode,  JDK_
 	return JDK_TRUE;
 }
 
+JDK_BOOL JDK_is_all_sibling_chns_close_2MUX(JDK_UINT32 chn, JDK_INT32 viDev)
+{
+	int ii;
+	JDK_UINT32 tmpChnl;
+	JDK_UINT32 openFlag = 0;
+
+	tmpChnl = viDev * 2;
+
+	if ( chn%2 == 1)
+	{
+		tmpChnl -= 1;
+	}
+	else
+	{
+		tmpChnl += 1;
+	}
+
+	if (JDK_CHN_STATE(tmpChnl) == JDK_CHN_STATE_BNC)
+	{
+		return JDK_FALSE;
+	}
+	else
+	{
+		return JDK_TRUE;
+	}
+}
+
 JDK_BOOL JDK_is_all_sibling_chns_close(JDK_UINT32 thiz_chn, JDK_VI_MUX_MODE muxMode)
 {
 	JDK_INT32 n;

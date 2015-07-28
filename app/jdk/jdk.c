@@ -980,6 +980,27 @@ JDK_BOOL JDK_vin_open(JDK_UINT32 chn, lpJDK_VIN_ARG arg)
 	
 	if (chn < JDK_ACTIVE_CAM()) {
 		if ((JDK_IS_BNC_CAM(chn) == JDK_TRUE)) {
+#if defined VI_DEV_2MUX_CHNL
+
+			if(arg->inMode == JDK_INPUT_FORMAT_AUTO){
+				if(s_jdkCtx->adIface && s_jdkCtx->adIface->probe_vi_format){
+					arg->inMode = s_jdkCtx->adIface->probe_vi_format(chn);
+				}else{
+					arg->inMode = s_jdkCtx->maxBncCamImgResol;
+				}
+			}
+			if (arg->inMode == JDK_INPUT_FORMAT_UNKNOWN) {
+				JDK_TRACE("--> chn %u probe mode is %s", chn, "UNKNOWN");
+				arg->inMode = s_jdkCtx->maxBncCamImgResol;
+			} else {
+				JDK_TRACE("--> chn %u probe mode is %s", chn, g_JdkChnInputModeString[arg->inMode]);
+			}
+			if (((arg->inMode > s_jdkCtx->maxBncCamImgResol) && (arg->cutMode == JDK_VI_CUT_MODE_NONE))
+				|| (arg->inMode == JDK_INPUT_BNC_HFHD)) {
+				JDK_TRACE("exceed maxBncCamImgResol, chn %u set cut-mode: 1/2", chn);
+				arg->cutMode = JDK_VI_CUT_MODE_1_2;
+			}
+#else
 			if ((chn % arg->muxMode) == 0) {
 				if(arg->inMode == JDK_INPUT_FORMAT_AUTO){
 					if(s_jdkCtx->adIface && s_jdkCtx->adIface->probe_vi_format){
@@ -1005,9 +1026,10 @@ JDK_BOOL JDK_vin_open(JDK_UINT32 chn, lpJDK_VIN_ARG arg)
 					arg->cutMode = s_jdkCtx->viArg[chn-chn%arg->muxMode].cutMode;
 					arg->muxMode = s_jdkCtx->viArg[chn-chn%arg->muxMode].muxMode;
 				} else {
-					arg->inMode = s_jdkCtx->maxBncCamImgResol;;
+					arg->inMode = s_jdkCtx->maxBncCamImgResol;
 				}
 			}
+#endif
 		}
 		sleep_ms_c(10); // ---necessary ---
 		JDK_TRACE("chn %u probe mode is %s , mux:%u cutmode:%u", chn, g_JdkChnInputModeString[arg->inMode], arg->muxMode, arg->cutMode);
@@ -1445,6 +1467,7 @@ void *jdk_vi_format_check_proc(void *param)
 	lpJDK_CTX thiz = (lpJDK_CTX)param;
 	JDK_BOOL isLoss;
 	JDK_UINT32 mux_mode = JDK_get_mux_mode();
+	VI_SCAN_MODE_E getScanMode, setScanMode;
 	
 	JDK_TRACE("jdk_vi_format_check_proc....");
 	while (thiz->viCheckLoopTrigger) 
@@ -1465,6 +1488,14 @@ void *jdk_vi_format_check_proc(void *param)
 						thiz->viChnModeTemp[n] = format;
 					}
 				}else if ((n % 2) == 0) {
+				#if defined VI_DEV_2MUX_CHNL
+						format = thiz->adIface->probe_vi_format(n);
+						if ((format != JDK_CHN_IN_MODE(n)) && (format != JDK_INPUT_FORMAT_UNKNOWN)) {
+							JDK_TRACE("%u ]] chn mode changed %s->>%s", n, g_JdkChnInputModeString[JDK_CHN_IN_MODE(n)], g_JdkChnInputModeString[format]);
+							// mode changed
+							thiz->viChnModeTemp[n] = format;
+						}
+				#else
 					isLoss = jdk_bnc_vin_is_loss(n + 1); 
 					if (isLoss == TRUE) {
 						format = thiz->adIface->probe_vi_format(n);
@@ -1475,8 +1506,17 @@ void *jdk_vi_format_check_proc(void *param)
 							thiz->viChnModeTemp[n + 1] = format;
 						}
 					}
+				#endif
 				}else {
 					if(JDK_VSUPPORT_HD1080P == JDK_vin_get_max_support()){
+					#if defined VI_DEV_2MUX_CHNL
+							format = thiz->adIface->probe_vi_format(n);
+							if ((format != JDK_CHN_IN_MODE(n)) && (format != JDK_INPUT_FORMAT_UNKNOWN)) {
+								JDK_TRACE("%u ]] chn mode changed %d->%d", n, JDK_CHN_IN_MODE(n), format);
+								// mode changed
+								thiz->viChnModeTemp[n] = format;
+							}
+					#else
 						isLoss = jdk_bnc_vin_is_loss(n - 1);
 						if (isLoss == TRUE) {
 							format = thiz->adIface->probe_vi_format(n);
@@ -1487,6 +1527,7 @@ void *jdk_vi_format_check_proc(void *param)
 								thiz->viChnModeTemp[n - 1] = format;
 							}
 						}
+					#endif
 					}
 				}
 				//if (isLoss == FALSE) {

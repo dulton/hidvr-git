@@ -5,8 +5,6 @@
 #include "bsp/gpio_i2c_drv.h"
 #define XDBG_DEV "/dev/gpio_i2c"
 
-#include "DH9901_API.h"
-
 static int i2c_port_dev = -1;
 
 #define i2c_port_devcheck(x) ((x) >= 0)
@@ -54,7 +52,7 @@ void  HDDVR_i2c_port_exit(void)
 	}
 }
 
-DH_S32 HDDVR_i2c_WriteByte(DH_U8 ucChipAddr, DH_U8 ucRegAddr, DH_U8 ucRegValue)
+unsigned int HDDVR_i2c_WriteByte(unsigned char ucChipAddr, unsigned char ucRegAddr, unsigned char ucRegValue)
 {
     GI2C_ARR_STRUCT tmpStruct;
 
@@ -68,7 +66,7 @@ DH_S32 HDDVR_i2c_WriteByte(DH_U8 ucChipAddr, DH_U8 ucRegAddr, DH_U8 ucRegValue)
 	return HDDVR_LowWriteReg(&tmpStruct);
 }
 
-DH_U8  HDDVR_i2c_ReadByte(DH_U8 ucChipAddr, DH_U8 ucRegAddr)
+unsigned char  HDDVR_i2c_ReadByte(unsigned char ucChipAddr, unsigned char ucRegAddr)
 {
     GI2C_ARR_STRUCT tmpStruct;
 

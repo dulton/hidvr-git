@@ -1,4 +1,5 @@
-PRJ_CROSS       := /src/arm-hisiv100/bin/arm-hisiv100-linux-uclibcgnueabi-
+#PRJ_CROSS       := /src/arm-hisiv100/bin/arm-hisiv100-linux-uclibcgnueabi-
+PRJ_CROSS       := /opt/hisi-linux-nptl/arm-hisiv100-linux/bin/arm-hisiv100-linux-uclibcgnueabi-
 BIN_FMT         := eabi
 SDK_PLAT        := HI3520D
 SDK_LIBS        := -lmpi -lVoiceEngine -laec -lanr -lhdmi -lresampler -ljpeg -ltde -lvqev2

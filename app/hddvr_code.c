@@ -1,6 +1,7 @@
 
 #include <string.h>
 
+
 #include "conf.h"  //Import MAX_CAM_CH Definition
 #include "envfix.h"
 
@@ -21,26 +22,15 @@ int gHDChip = HDCHIP_NONE;
 
 int HDDVR_Probe(void)
 {
-	if(0 == HDTVI_Probe()) {
-		return HDCHIP_HDTVI;
-	}
-
 	if(0 == HDAHD_Probe()) {
 		return HDCHIP_HDAHD;
 	}
-
-//	if(0 == HDFHD_Probe()) {
-//		return HDCHIP_HDFHD;
-//	}
 
 	return HDCHIP_NONE;
 }
 
 int HDDVR_VSupportCheck(void)
 {
-	if(gHDChip == HDCHIP_HDTVI) {
-		return HDTVI_VSupportCheck();
-	}
 
 	if(gHDChip == HDCHIP_HDAHD) {
 		return HDAHD_VSupportCheck();
@@ -55,9 +45,6 @@ int HDDVR_Init(int Fmt)
 
 	gHDChip = HDDVR_Probe();
 
-	if(gHDChip == HDCHIP_HDTVI) {
-		HDTVI_Init(Fmt);
-	}
 	if(gHDChip == HDCHIP_HDAHD) {
 		HDAHD_Init(Fmt);
 	}
@@ -91,9 +78,9 @@ char * HDDVR_GetCHNLType(int Chnl)
 	case HDCHIP_HDCVI:
 		return "";
 	case HDCHIP_HDTVI:
-		return HDTVI_GetCHNLType(Chnl);
+		return "";//HDTVI_GetCHNLType(Chnl);
 	case HDCHIP_HDAHD:
-		return HDAHD_GetCHNLType(Chnl);
+		return "";//HDAHD_GetCHNLType(Chnl);
 	case HDCHIP_HDFHD:
 		return "";
 	}
@@ -103,9 +90,6 @@ char * HDDVR_GetCHNLType(int Chnl)
 
 int HDDVR_Exit(void)
 {
-	if(gHDChip == HDCHIP_HDTVI) {
-		HDTVI_Exit();
-	}
 	if(gHDChip == HDCHIP_HDAHD) {
 		HDAHD_Exit();
 	}
@@ -117,9 +101,6 @@ int HDDVR_Exit(void)
 
 int HDDVR_InputFormatCheck(int Chnl)
 {
-	if(gHDChip == HDCHIP_HDTVI) {
-		return HDTVI_InputFormatCheck(Chnl);
-	}
 	if(gHDChip == HDCHIP_HDAHD) {
 		return HDAHD_InputFormatCheck(Chnl);
 	}
@@ -127,13 +108,10 @@ int HDDVR_InputFormatCheck(int Chnl)
 	return HDVIDEO_UNKNOWN;
 }
 
-int HDDVR_InputFormatSetting(int Chnl, HD_INPUT_FORMAT Frmt)
+int HDDVR_InputFormatSetting(int Chnl, HD_INPUT_FORMAT Ifrmt, HD_OUTPUT_FORMAT Ofrmt)
 {
-	if(gHDChip == HDCHIP_HDTVI) {
-		return HDTVI_InputFormatSetting(Chnl, Frmt);
-	}
 	if(gHDChip == HDCHIP_HDAHD) {
-		return HDAHD_InputFormatSetting(Chnl, Frmt);
+		return HDAHD_InputFormatSetting(Chnl, Ifrmt, Ofrmt);
 	}
 
 	return -1;
@@ -141,10 +119,6 @@ int HDDVR_InputFormatSetting(int Chnl, HD_INPUT_FORMAT Frmt)
 
 int HDDVR_VideoSetColor(int Chnl, int nHue, int nBrightness, int nContrast, int nSaturation, int nSharpness)
 {
-	if(gHDChip == HDCHIP_HDTVI) {
-		return HDTVI_VideoSetColor(Chnl, nHue, nBrightness, nContrast, nSaturation, nSharpness);
-	}
-
 	if(gHDChip == HDCHIP_HDAHD) {
 		return HDAHD_VideoSetColor(Chnl, nHue, nBrightness, nContrast, nSaturation, nSharpness);
 	}
@@ -154,10 +128,6 @@ int HDDVR_VideoSetColor(int Chnl, int nHue, int nBrightness, int nContrast, int 
 
 int HDDVR_VideoLossChnl(int Chnl)
 {
-	if(gHDChip == HDCHIP_HDTVI) {
-		return (HDVLOSS_INVIDEO != HDTVI_VideoVLossCheck(Chnl));
-	}
-
 	if(gHDChip == HDCHIP_HDAHD) {
 		return (HDVLOSS_INVIDEO != HDAHD_VideoVLossCheck(Chnl));
 	}
@@ -175,10 +145,6 @@ int HDDVR_VideoLoss(void)
 
 		tmpLoss <<= 1;
 
-		if(gHDChip == HDCHIP_HDTVI) {
-			tmpChck = (HDVLOSS_INVIDEO != HDTVI_VideoVLossCheck(ii));
-		}
-
 		if(gHDChip == HDCHIP_HDAHD) {
 			tmpChck = (HDVLOSS_INVIDEO != HDAHD_VideoVLossCheck(ii));
 		}
@@ -191,9 +157,6 @@ int HDDVR_VideoLoss(void)
 
 int HDDVR_VideoLossFix(int Chnl, int Fix)
 {
-	if(gHDChip == HDCHIP_HDTVI) {
-		return HDTVI_VideoLossFix(Chnl, Fix);
-	}
 	if(gHDChip == HDCHIP_HDAHD) {
 		return HDAHD_VideoLossFix(Chnl, Fix);
 	}
@@ -203,9 +166,6 @@ int HDDVR_VideoLossFix(int Chnl, int Fix)
 
 int HDDVR_VideoStVideoFix(int Chnl)
 {
-	if(gHDChip == HDCHIP_HDTVI) {
-		return HDTVI_VideoStVideoFix(Chnl);
-	}
 	if(gHDChip == HDCHIP_HDAHD) {
 		return HDAHD_VideoStVideoFix(Chnl);
 	}
@@ -216,10 +176,10 @@ int HDDVR_VideoStVideoFix(int Chnl)
 int HDDVR_GetFormatInfo(HD_INPUT_FORMAT Frmt, int * SizW, int * SizH, int * Fps)
 {
 	int ViInfoTBL[HDVIDEO_CNT2][3] = {
-		{ 720,  576, 25}, { 720,  480, 30}, //SD720H
-		{ 960,  576, 25}, { 960,  480, 30}, //SD960H
-		{1280,  720, 25}, {1280,  720, 30}, //HD720P
-		{1280,  720, 50}, {1280,  720, 60}, //HD720P
+		{ 720,	576, 25}, { 720,  480, 30}, //SD720H
+		{1920,	576, 25}, { 960,  480, 30}, //SD960H
+		{1280,	720, 25}, {1280,  720, 30}, //HD720P
+		{1280,	720, 50}, {1280,  720, 60}, //HD720P
 		{1920, 1080, 25}, {1920, 1080, 30}, //HD1080P
 		{ 0, 0, 0},
 		{ 960, 0, 0},
@@ -278,6 +238,39 @@ int HDDVR_AudioPlayBack(int Chnl)
 {
 	if(gHDChip == HDCHIP_HDAHD) {
 		return HDAHD_AudioPlayBack(Chnl);
+	}
+
+	return 0;
+}
+
+int HDDVR_UTC_Init(int video_mode)
+{
+	if(gHDChip == HDCHIP_HDAHD)
+	{
+		HDAHD_UTC_Init(video_mode);
+	}
+
+	return 0;
+
+}
+
+int HDDVR_UTC_Send(int Chnl, HDDVR_UTC_CMD Cmd)
+{
+	int Revalue = 0;
+
+	if(gHDChip == HDCHIP_HDAHD)
+	{
+		Revalue = HDAHD_UTC_Send(Chnl, Cmd);
+	}
+
+	return Revalue;
+}
+
+int HDDVR_UTC_Exit()
+{
+	if(gHDChip == HDCHIP_HDAHD)
+	{
+		return HDAHD_UTC_Exit();
 	}
 
 	return 0;

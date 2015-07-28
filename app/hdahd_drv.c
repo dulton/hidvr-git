@@ -71,6 +71,14 @@ static int gHDAHD_WorkStandard = NVP1108_PAL;
 #define HDAHD_ADDR3 (0x66)
 unsigned char HDAHD_ADDR[4] = { HDAHD_ADDR0, HDAHD_ADDR1, HDAHD_ADDR2, HDAHD_ADDR3 };
 unsigned char HDAHD_SYID[4] = { 0, 0, 0, 0 };
+unsigned char HDAHD_REVID[4];
+
+void acp_reg_rx_clear(unsigned char tmpAddr, unsigned char ch);
+void init_acp_ex(unsigned char tmpAddr, unsigned char ch);
+void acp_each_setting(unsigned char addr
+					,unsigned char ch
+					,int ch_mode_status
+					,unsigned char vidmode);
 
 int HDAHD_ChipGetMap(int Chnl, int *RealChip, int *RealChnl, int *RealAddr)
 {
@@ -875,6 +883,11 @@ unsigned char NVP6124_B5_PAL_Buf[] = {
 	/*0xf0*/ 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x05,
 };
 
+#define NVP6124_CHNL_NUM_MAX (16)
+int nvp6124_videoformat[NVP6124_CHNL_NUM_MAX]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int current_videoformat[NVP6124_CHNL_NUM_MAX]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int current_videomode = 0; //当前制式
+
 //channel_mode:
 //0x00 --> ALL channel 720P mode
 //0x03 --> 1/2 channel 960H mode
@@ -1500,28 +1513,56 @@ void nvp6124_each_mode_setting(int addr, int chnl, int video_mode, int channel_m
 		HDDVR_i2c_WriteByte(tmpAddr, 0x48+tmpChnl,  (video_mode==NVP1108_PAL) ?0x00:0x00);
 		HDDVR_i2c_WriteByte(tmpAddr, 0x4c+tmpChnl,  (video_mode==NVP1108_PAL) ?0x04:0x00);
 		HDDVR_i2c_WriteByte(tmpAddr, 0x50+tmpChnl,  (video_mode==NVP1108_PAL) ?0x04:0x00);
-		HDDVR_i2c_WriteByte(tmpAddr, 0x58+tmpChnl,  (video_mode==NVP1108_PAL) ?0x78:0x90);
+		if(HDVIDEO_SD960H25FPS == channel_mode)
+		{
+			HDDVR_i2c_WriteByte(tmpAddr, 0x58+tmpChnl,  (video_mode==NVP1108_PAL)? 0x3B:0x4B);
+		}
+		else
+		{
+			HDDVR_i2c_WriteByte(tmpAddr, 0x58+tmpChnl,  (video_mode==NVP1108_PAL)  ?0x80:0x90);
+		}
 		HDDVR_i2c_WriteByte(tmpAddr, 0x5c+tmpChnl,  (video_mode==NVP1108_PAL) ?0x1e:0x1e);
 		HDDVR_i2c_WriteByte(tmpAddr, 0x64+tmpChnl,  (video_mode==NVP1108_PAL) ?0x0d:0x08);
-		HDDVR_i2c_WriteByte(tmpAddr, 0x81+tmpChnl,  (video_mode==NVP1108_PAL) ?0x00:0x00);	
-		HDDVR_i2c_WriteByte(tmpAddr, 0x85+tmpChnl,  (video_mode==NVP1108_PAL) ?0x11:0x11);
-		HDDVR_i2c_WriteByte(tmpAddr, 0x89+tmpChnl,  (video_mode==NVP1108_PAL) ?0x10:0x00);
-		HDDVR_i2c_WriteByte(tmpAddr, tmpChnl+0x8E, (video_mode==NVP1108_PAL) ?0x08:0x07);
-		HDDVR_i2c_WriteByte(tmpAddr, 0x93+tmpChnl,  (video_mode==NVP1108_PAL) ?0x01:0x01);
-		HDDVR_i2c_WriteByte(tmpAddr, 0x98+tmpChnl,  (video_mode==NVP1108_PAL) ?0x06:0x03);
+
+		if(HDVIDEO_SD960H25FPS == channel_mode)
+		{
+			HDDVR_i2c_WriteByte(tmpAddr, 0x81+tmpChnl, (video_mode==NVP1108_PAL)?0x40:0x40);
+			HDDVR_i2c_WriteByte(tmpAddr, 0x85+tmpChnl, (video_mode==NVP1108_PAL)?0x00:0x00);
+			HDDVR_i2c_WriteByte(tmpAddr, 0x89+tmpChnl, (video_mode==NVP1108_PAL)?0x00:0x00);
+			HDDVR_i2c_WriteByte(tmpAddr, tmpChnl+0x8E, (video_mode==NVP1108_PAL)?0x10:0x10);
+		}
+		else
+		{
+			HDDVR_i2c_WriteByte(tmpAddr, 0x81+tmpChnl,  (video_mode==NVP1108_PAL) ?0x00:0x00);
+			HDDVR_i2c_WriteByte(tmpAddr, 0x85+tmpChnl,  (video_mode==NVP1108_PAL) ?0x11:0x11);
+			HDDVR_i2c_WriteByte(tmpAddr, 0x89+tmpChnl,  (video_mode==NVP1108_PAL) ?0x10:0x00);
+			HDDVR_i2c_WriteByte(tmpAddr, tmpChnl+0x8E, (video_mode==NVP1108_PAL) ?0x08:0x07);
+		}
+		HDDVR_i2c_WriteByte(tmpAddr, 0x93+tmpChnl,  (video_mode==NVP1108_PAL) ?0x00:0x00);
+		HDDVR_i2c_WriteByte(tmpAddr, 0x98+tmpChnl,  (video_mode==NVP1108_PAL) ?0x07:0x04);
 		HDDVR_i2c_WriteByte(tmpAddr, 0xa0+tmpChnl,  (video_mode==NVP1108_PAL) ?0x00:0x10);
 		HDDVR_i2c_WriteByte(tmpAddr, 0xa4+tmpChnl,  (video_mode==NVP1108_PAL) ?0x00:0x01);
 		I2C_UnLock();
 		I2C_InLock();
 		HDDVR_i2c_WriteByte(tmpAddr, 0xFF, 0x01);
-		HDDVR_i2c_WriteByte(tmpAddr, 0x88+tmpChnl,  (video_mode==NVP1108_PAL) ?0x7e:0x7e);
-		HDDVR_i2c_WriteByte(tmpAddr, 0x8c+tmpChnl,  (video_mode==NVP1108_PAL) ?0x26:0x26);
+
+		if(HDVIDEO_SD960H25FPS == channel_mode)
+		{
+			HDDVR_i2c_WriteByte(tmpAddr, 0x88+tmpChnl, (video_mode==NVP1108_PAL)?0x46:0x46);
+			HDDVR_i2c_WriteByte(tmpAddr, 0x8c+tmpChnl, (video_mode==NVP1108_PAL)?0x47:0x47);
+			HDDVR_i2c_WriteByte(tmpAddr, 0xd7, HDDVR_i2c_ReadByte(tmpAddr, 0xd7)|(1<<(tmpChnl)));
+		}
+		else
+		{
+			HDDVR_i2c_WriteByte(tmpAddr, 0x88+tmpChnl,  (video_mode==NVP1108_PAL) ?0x7e:0x7e);
+			HDDVR_i2c_WriteByte(tmpAddr, 0x8c+tmpChnl,  (video_mode==NVP1108_PAL) ?0x26:0x26);
+			HDDVR_i2c_WriteByte(tmpAddr, 0xd7, HDDVR_i2c_ReadByte(tmpAddr, 0xd7)&(~(1<<(tmpChnl))));
+		}
+
 		if(HDAHD_SYID[0] == AD_AHD_NVP6124)
 			HDDVR_i2c_WriteByte(tmpAddr, 0xcc+tmpChnl,  0x36);
-		else if(HDAHD_SYID[0] == AD_AHD_NVP6114A) {
-			//HDDVR_i2c_WriteByte(tmpAddr, 0xcd+(tmpChnl%2)*2, 0x36);
-		}
-		HDDVR_i2c_WriteByte(tmpAddr, 0xd7, HDDVR_i2c_ReadByte(tmpAddr, 0xd7)&(~(1<<(tmpChnl))));
+		else if(HDAHD_SYID[0] == AD_AHD_NVP6114A)
+			HDDVR_i2c_WriteByte(tmpAddr, 0xcd+(tmpChnl%2)*2, 0x36);
 		HDDVR_i2c_WriteByte(tmpAddr, 0xFF, 0x02);  //motion
 		tmpValue = HDDVR_i2c_ReadByte(tmpAddr, 0x16+(tmpChnl)/2);
 		HDDVR_i2c_WriteByte(tmpAddr, 0x16+(tmpChnl)/2, (tmpValue&(tmpChnl%2==0?0xF0:0x0F))|(0x00<<((tmpChnl%2)*4)));
@@ -1580,9 +1621,8 @@ void nvp6124_each_mode_setting(int addr, int chnl, int video_mode, int channel_m
 		//HDDVR_i2c_WriteByte(tmpAddr, 0xcc+tmpChnl,(video_mode==NVP1108_PAL) ?0x46:0x46);
 		if(HDAHD_SYID[0] == AD_AHD_NVP6124)
 			HDDVR_i2c_WriteByte(tmpAddr, 0xcc+tmpChnl, 0x46);
-		else if(HDAHD_SYID[0] == AD_AHD_NVP6114A) {
-			//HDDVR_i2c_WriteByte(tmpAddr, 0xcd+(tmpChnl%2)*2, 0x46);
-		}
+		else if(HDAHD_SYID[0] == AD_AHD_NVP6114A)
+			HDDVR_i2c_WriteByte(tmpAddr, 0xcd+(tmpChnl%2)*2, 0x46);
 		HDDVR_i2c_WriteByte(tmpAddr, 0xd7,HDDVR_i2c_ReadByte(tmpAddr, 0xd7)|(1<<(tmpChnl)));
 		HDDVR_i2c_WriteByte(tmpAddr, 0xFF, 0x02);  //motion
 		tmpValue = HDDVR_i2c_ReadByte(tmpAddr, 0x16+(tmpChnl)/2);
@@ -1654,9 +1694,8 @@ void nvp6124_each_mode_setting(int addr, int chnl, int video_mode, int channel_m
 		//HDDVR_i2c_WriteByte(tmpAddr, 0xcc+tmpChnl,(video_mode==NVP1108_PAL) ?0x66:0x66);
 		if(HDAHD_SYID[0] == AD_AHD_NVP6124)
 			HDDVR_i2c_WriteByte(tmpAddr, 0xcc+tmpChnl, 0x66);
-		else if(HDAHD_SYID[0] == AD_AHD_NVP6114A) {
-			//HDDVR_i2c_WriteByte(tmpAddr, 0xcd+(tmpChnl%2)*2, 0x66);
-		}
+		else if(HDAHD_SYID[0] == AD_AHD_NVP6114A)
+			HDDVR_i2c_WriteByte(tmpAddr, 0xcd+(tmpChnl%2)*2, 0x66);
 		HDDVR_i2c_WriteByte(tmpAddr, 0xd7, HDDVR_i2c_ReadByte(tmpAddr, 0xd7)|(1<<(tmpChnl)));
 		HDDVR_i2c_WriteByte(tmpAddr, 0xFF, 0x02);  //motion
 		tmpValue = HDDVR_i2c_ReadByte(tmpAddr, 0x16+(tmpChnl)/2);
@@ -1703,7 +1742,7 @@ void nvp6124_each_mode_setting(int addr, int chnl, int video_mode, int channel_m
 		HDDVR_i2c_WriteByte(tmpAddr, 0x48+tmpChnl, (video_mode==NVP1108_PAL) ?0x00:0x00);
 		HDDVR_i2c_WriteByte(tmpAddr, 0x4c+tmpChnl, (video_mode==NVP1108_PAL) ?0x00:0x00);
 		HDDVR_i2c_WriteByte(tmpAddr, 0x50+tmpChnl, (video_mode==NVP1108_PAL) ?0x00:0x00);
-		HDDVR_i2c_WriteByte(tmpAddr, 0x58+tmpChnl, (video_mode==NVP1108_PAL) ?0x6a:0x88);
+		HDDVR_i2c_WriteByte(tmpAddr, 0x58+tmpChnl, (video_mode==NVP1108_PAL) ?0x6a:0x49);
 		HDDVR_i2c_WriteByte(tmpAddr, 0x5c+tmpChnl, (video_mode==NVP1108_PAL) ?0x9e:0x9e);
 		HDDVR_i2c_WriteByte(tmpAddr, 0x64+tmpChnl, (video_mode==NVP1108_PAL) ?0xbf:0x8d);
 		HDDVR_i2c_WriteByte(tmpAddr, 0x81+tmpChnl, (video_mode==NVP1108_PAL) ?0x03:0x02);
@@ -1722,9 +1761,8 @@ void nvp6124_each_mode_setting(int addr, int chnl, int video_mode, int channel_m
 		//HDDVR_i2c_WriteByte(tmpAddr, 0xcc+tmpChnl,(video_mode==NVP1108_PAL) ?0x66:0x66);
 		if(HDAHD_SYID[0] == AD_AHD_NVP6124)
 			HDDVR_i2c_WriteByte(tmpAddr, 0xcc+tmpChnl, 0x66);
-		else if(HDAHD_SYID[0] == AD_AHD_NVP6114A) {
-			//HDDVR_i2c_WriteByte(tmpAddr, 0xcd+(tmpChnl%2)*2, 0x66);
-		}
+		else if(HDAHD_SYID[0] == AD_AHD_NVP6114A)
+			HDDVR_i2c_WriteByte(tmpAddr, 0xcd+(tmpChnl%2)*2, 0x66);
 		HDDVR_i2c_WriteByte(tmpAddr, 0xd7, HDDVR_i2c_ReadByte(tmpAddr, 0xd7)|(1<<(tmpChnl)));
 		HDDVR_i2c_WriteByte(tmpAddr, 0xFF, 0x02);  //motion
 		tmpValue = HDDVR_i2c_ReadByte(tmpAddr, 0x16+(tmpChnl)/2);
@@ -1768,6 +1806,9 @@ void nvp6124_each_mode_setting(int addr, int chnl, int video_mode, int channel_m
 		printf("ch%d wrong mode detected!!!\n", chnl);
 		break;
 	}
+
+	init_acp_ex(tmpAddr, tmpChnl);
+	acp_each_setting(tmpAddr, tmpChnl, nvp6124_videoformat[tmpChnl], video_mode);
 }
 
 enum
@@ -1776,8 +1817,345 @@ enum
 	NVP6124_VI_720P_2530,
 	NVP6124_VI_720P_5060,
 	NVP6124_VI_1080P_2530,
+	NVP6124_VI_1920H,
+	NVP6124_VI_720H,
+	NVP6124_VI_1280H,
+	NVP6124_VI_1440H,
 	NVP6124_VI_BUTT
 };
+
+unsigned char chipon297MHz[4]={0};
+void nvp6124_set_clockmode(unsigned char is297MHz)
+{
+	HDDVR_i2c_WriteByte(HDAHD_ADDR[0], 0xFF, 0x01);
+	HDDVR_i2c_WriteByte(HDAHD_ADDR[0], 0x80, 0x40);
+	if(is297MHz == 1)
+	{
+		HDDVR_i2c_WriteByte(HDAHD_ADDR[0], 0x82, 0x12);
+		chipon297MHz[0] = 1;
+	}
+	else
+	{
+		HDDVR_i2c_WriteByte(HDAHD_ADDR[0], 0x82, 0x14);
+		chipon297MHz[0] = 0;
+	}
+	HDDVR_i2c_WriteByte(HDAHD_ADDR[0], 0x83, 0x2C);
+	HDDVR_i2c_WriteByte(HDAHD_ADDR[0], 0x80, 0x61);
+	HDDVR_i2c_WriteByte(HDAHD_ADDR[0], 0x80, 0x60);
+}
+
+void nvp6124_outport_setmode(int addr, int port_numb, HD_OUTPUT_FORMAT Ofrmt, int chid)
+{
+	unsigned char tmp=0;
+
+	I2C_InLock();
+
+	if(Ofrmt == NVP6124_OUTMODE_2MUX_FHD || Ofrmt == NVP6124_OUTMODE_4MUX_HD)
+	{
+		if(chipon297MHz[0] == 0)
+			nvp6124_set_clockmode(1);
+	}
+	else
+	{
+		if(chipon297MHz[0] == 1)
+			nvp6124_set_clockmode(0);
+	}
+
+	switch(Ofrmt)
+	{
+		case NVP6124_OUTMODE_1MUX_SD:
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+			HDDVR_i2c_WriteByte(addr, 0x56, 0x10);
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+			HDDVR_i2c_WriteByte(addr, 0xC0+port_numb*2, (chid<<4)|chid);
+			HDDVR_i2c_WriteByte(addr, 0xC1+port_numb*2, (chid<<4)|chid);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xC8+port_numb/2) & (port_numb%2?0x0F:0xF0);
+			HDDVR_i2c_WriteByte(addr, 0xC8+port_numb/2, tmp);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xCA);
+			tmp |= ((0x01<<(port_numb+4)) | (0x01<<(port_numb)));
+			HDDVR_i2c_WriteByte(addr, 0xCA, tmp);	//打开端口[3:0]和时钟[7:4],和硬件相关。
+			HDDVR_i2c_WriteByte(addr, 0xCC+port_numb, 0x36);	 //时钟频率设置
+		break;
+		case NVP6124_OUTMODE_1MUX_HD:
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+			HDDVR_i2c_WriteByte(addr, 0x56, 0x10);
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+			HDDVR_i2c_WriteByte(addr, 0xC0+port_numb*2, (chid<<4)|chid);
+			HDDVR_i2c_WriteByte(addr, 0xC1+port_numb*2, (chid<<4)|chid);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xC8+port_numb/2) & (port_numb%2?0x0F:0xF0);
+			HDDVR_i2c_WriteByte(addr, 0xC8+port_numb/2, tmp);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xCA);
+			tmp |= ((0x01<<(port_numb+4)) | (0x01<<(port_numb)));
+			HDDVR_i2c_WriteByte(addr, 0xCA, tmp);
+			HDDVR_i2c_WriteByte(addr, 0xCC+port_numb, 0x46);
+		break;
+		case NVP6124_OUTMODE_1MUX_HD5060:
+		case NVP6124_OUTMODE_1MUX_FHD:
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+			HDDVR_i2c_WriteByte(addr, 0x56, 0x10);
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+			HDDVR_i2c_WriteByte(addr, 0xC0+port_numb*2, (chid<<4)|chid);
+			HDDVR_i2c_WriteByte(addr, 0xC1+port_numb*2, (chid<<4)|chid);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xC8+port_numb/2) & (port_numb%2?0x0F:0xF0);
+			HDDVR_i2c_WriteByte(addr, 0xC8+port_numb/2, tmp);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xCA);
+			tmp |= ((0x01<<(port_numb+4)) | (0x01<<(port_numb)));
+			HDDVR_i2c_WriteByte(addr, 0xCA, tmp);
+			HDDVR_i2c_WriteByte(addr, 0xCC+port_numb, 0x66);
+			break;
+		case NVP6124_OUTMODE_2MUX_SD:
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+			HDDVR_i2c_WriteByte(addr, 0x56, 0x10);
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+			HDDVR_i2c_WriteByte(addr, 0xC0+port_numb*2, chid==0?0x10:0x32);
+			HDDVR_i2c_WriteByte(addr, 0xC1+port_numb*2, chid==0?0x10:0x32);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xC8+port_numb/2) & (port_numb%2?0x0F:0xF0);
+			tmp |= (port_numb%2?0x20:0x02);
+			HDDVR_i2c_WriteByte(addr, 0xC8+port_numb/2, tmp);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xCA);
+			tmp |= ((0x01<<(port_numb+4)) | (0x01<<(port_numb)));
+			HDDVR_i2c_WriteByte(addr, 0xCA, tmp);
+			HDDVR_i2c_WriteByte(addr, 0xCC+port_numb, 0x46);
+			break;
+		case NVP6124_OUTMODE_2MUX_HD_X:
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+			HDDVR_i2c_WriteByte(addr, 0x56, 0x10);
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+			HDDVR_i2c_WriteByte(addr, 0xC0+port_numb*2, chid==0?0x10:0x32);
+			HDDVR_i2c_WriteByte(addr, 0xC1+port_numb*2, chid==0?0x10:0x32);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xC8+port_numb/2) & (port_numb%2?0x0F:0xF0);
+			tmp |= (port_numb%2?0x10:0x01);
+			HDDVR_i2c_WriteByte(addr, 0xC8+port_numb/2, tmp);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xCA);
+			tmp |= ((0x01<<(port_numb+4)) | (0x01<<(port_numb)));
+			HDDVR_i2c_WriteByte(addr, 0xCA, tmp);
+			HDDVR_i2c_WriteByte(addr, 0xCC+port_numb, 0x46);
+			break;
+		case NVP6124_OUTMODE_2MUX_HD:
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+			HDDVR_i2c_WriteByte(addr, 0x56, 0x10);
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+			HDDVR_i2c_WriteByte(addr, 0xC0+port_numb*2, chid==0?0x10:0x32);
+			HDDVR_i2c_WriteByte(addr, 0xC1+port_numb*2, chid==0?0x10:0x32);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xC8+port_numb/2) & (port_numb%2?0x0F:0xF0);
+			tmp |= (port_numb%2?0x20:0x02);
+			HDDVR_i2c_WriteByte(addr, 0xC8+port_numb/2, tmp);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xCA);
+			tmp |= ((0x01<<(port_numb+4)) | (0x01<<(port_numb)));
+			HDDVR_i2c_WriteByte(addr, 0xCA, tmp);
+			HDDVR_i2c_WriteByte(addr, 0xCC+port_numb, 0x66);
+			break;
+		case NVP6124_OUTMODE_2MUX_FHD_X:
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+			HDDVR_i2c_WriteByte(addr, 0x56, 0x10);
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+			HDDVR_i2c_WriteByte(addr, 0xC0+port_numb*2, chid==0?0x10:0x32);
+			HDDVR_i2c_WriteByte(addr, 0xC1+port_numb*2, chid==0?0x10:0x32);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xC8+port_numb/2) & (port_numb%2?0x0F:0xF0);
+			tmp |= (port_numb%2?0x10:0x01);
+			HDDVR_i2c_WriteByte(addr, 0xC8+port_numb/2, tmp);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xCA);
+			tmp |= ((0x01<<(port_numb+4)) | (0x01<<(port_numb)));
+			HDDVR_i2c_WriteByte(addr, 0xCA, tmp);
+			HDDVR_i2c_WriteByte(addr, 0xCC+port_numb, 0x66);
+			break;
+		case NVP6124_OUTMODE_4MUX_SD:
+		case NVP6124_OUTMODE_4MUX_HD:
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+			HDDVR_i2c_WriteByte(addr, 0x56, 0x32);
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+			HDDVR_i2c_WriteByte(addr, 0xC0+port_numb*2, 0x10);
+			HDDVR_i2c_WriteByte(addr, 0xC1+port_numb*2, 0x32);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xC8+port_numb/2) & (port_numb%2?0x0F:0xF0);
+			tmp |= (port_numb%2?0x80:0x08);
+			HDDVR_i2c_WriteByte(addr, 0xC8+port_numb/2, tmp);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xCA);
+			tmp |= ((0x01<<(port_numb+4)) | (0x01<<(port_numb)));
+			HDDVR_i2c_WriteByte(addr, 0xCA, tmp);
+			HDDVR_i2c_WriteByte(addr, 0xCC+port_numb, 0x66);
+			break;
+		case NVP6124_OUTMODE_4MUX_HD_X:
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+			HDDVR_i2c_WriteByte(addr, 0x56, 0x32);
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+			HDDVR_i2c_WriteByte(addr, 0xC0+port_numb*2, 0x10);
+			HDDVR_i2c_WriteByte(addr, 0xC1+port_numb*2, 0x32);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xC8+port_numb/2) & (port_numb%2?0x0F:0xF0);
+			tmp |= (port_numb%2?0x30:0x03);
+			HDDVR_i2c_WriteByte(addr, 0xC8+port_numb/2, tmp);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xCA);
+			tmp |= ((0x01<<(port_numb+4)) | (0x01<<(port_numb)));
+			HDDVR_i2c_WriteByte(addr, 0xCA, tmp);
+			HDDVR_i2c_WriteByte(addr, 0xCC+port_numb, 0x66);
+			break;
+		case NVP6124_OUTMODE_2MUX_FHD:
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+			HDDVR_i2c_WriteByte(addr, 0x56, 0x10);
+			HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+			HDDVR_i2c_WriteByte(addr, 0x88+chid*2, 0x88);
+			HDDVR_i2c_WriteByte(addr, 0x89+chid*2, 0x88);
+			HDDVR_i2c_WriteByte(addr, 0x8C+chid*2, 0x42);
+			HDDVR_i2c_WriteByte(addr, 0x8D+chid*2, 0x42);
+			HDDVR_i2c_WriteByte(addr, 0xC0+port_numb*2, chid==0?0x10:0x32);
+			HDDVR_i2c_WriteByte(addr, 0xC1+port_numb*2, chid==0?0x10:0x32);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xC8+port_numb/2) & (port_numb%2?0x0F:0xF0);
+			tmp |= (port_numb%2?0x20:0x02);
+			HDDVR_i2c_WriteByte(addr, 0xC8+port_numb/2, tmp);
+			tmp = HDDVR_i2c_ReadByte(addr, 0xCA);
+			tmp |= ((0x01<<(port_numb+4)) | (0x01<<(port_numb)));
+			HDDVR_i2c_WriteByte(addr, 0xCA, tmp);
+			HDDVR_i2c_WriteByte(addr, 0xCC+port_numb, 0x46);
+			break;
+		default:
+			break;
+	}
+
+	I2C_UnLock();
+}
+
+
+
+void nvp6114a_outport_setmode(int addr, int port_numb, HD_OUTPUT_FORMAT Ofrmt, int chid, int port_mode)
+{
+	int tmpValue = 0;
+
+	I2C_InLock();
+
+	if(Ofrmt == NVP6124_OUTMODE_2MUX_FHD)
+	{
+		if(chipon297MHz[0] == 0)
+			nvp6124_set_clockmode(1);
+	}
+	else
+	{
+		if(chipon297MHz[0] == 1)
+			nvp6124_set_clockmode(0);
+	}
+
+	switch(Ofrmt)
+	{
+			case NVP6124_OUTMODE_1MUX_SD:
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+				HDDVR_i2c_WriteByte(addr, 0x56, 0x10);
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+				HDDVR_i2c_WriteByte(addr, 0xC2+port_numb*2, (chid<<4)|chid);
+				HDDVR_i2c_WriteByte(addr, 0xC3+port_numb*2, (chid<<4)|chid);
+				HDDVR_i2c_WriteByte(addr, 0xC6, HDDVR_i2c_ReadByte(addr, 0xC4));
+				HDDVR_i2c_WriteByte(addr, 0xC7, HDDVR_i2c_ReadByte(addr, 0xC5));
+				HDDVR_i2c_WriteByte(addr, 0xC8+port_numb, 0x00);
+				HDDVR_i2c_WriteByte(addr, 0xCD+(port_numb<<1), 0x36);
+			break;
+			case NVP6124_OUTMODE_1MUX_HD:
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+				HDDVR_i2c_WriteByte(addr, 0x56, 0x10);
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+				HDDVR_i2c_WriteByte(addr, 0xC2+port_numb*2, (chid<<4)|chid);
+				HDDVR_i2c_WriteByte(addr, 0xC3+port_numb*2, (chid<<4)|chid);
+				HDDVR_i2c_WriteByte(addr, 0xC6, HDDVR_i2c_ReadByte(addr, 0xC4));
+				HDDVR_i2c_WriteByte(addr, 0xC7, HDDVR_i2c_ReadByte(addr, 0xC5));
+				HDDVR_i2c_WriteByte(addr, 0xC8+port_numb, 0x00);
+				HDDVR_i2c_WriteByte(addr, 0xCD+(port_numb<<1), 0x46);
+			break;
+			case NVP6124_OUTMODE_1MUX_HD5060:
+			case NVP6124_OUTMODE_1MUX_FHD:
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+				HDDVR_i2c_WriteByte(addr, 0x56, 0x10);
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+				HDDVR_i2c_WriteByte(addr, 0xC2+port_numb*2, (chid<<4)|chid);
+				HDDVR_i2c_WriteByte(addr, 0xC3+port_numb*2, (chid<<4)|chid);
+				HDDVR_i2c_WriteByte(addr, 0xC6, HDDVR_i2c_ReadByte(addr, 0xC4));
+				HDDVR_i2c_WriteByte(addr, 0xC7, HDDVR_i2c_ReadByte(addr, 0xC5));
+				HDDVR_i2c_WriteByte(addr, 0xC8+port_numb, 0x00);
+				HDDVR_i2c_WriteByte(addr, 0xCD+(port_numb<<1), 0x66);
+				break;
+			case NVP6124_OUTMODE_2MUX_SD:
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+				HDDVR_i2c_WriteByte(addr, 0x56, 0x10);
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+				HDDVR_i2c_WriteByte(addr, 0xC2+port_numb*2, chid==0?0x10:0x32);
+				HDDVR_i2c_WriteByte(addr, 0xC3+port_numb*2, chid==0?0x10:0x32);
+				HDDVR_i2c_WriteByte(addr, 0xC6, HDDVR_i2c_ReadByte(addr, 0xC4));
+				HDDVR_i2c_WriteByte(addr, 0xC7, HDDVR_i2c_ReadByte(addr, 0xC5));
+				HDDVR_i2c_WriteByte(addr, 0xC8+port_numb, 0x22);
+				HDDVR_i2c_WriteByte(addr, 0xCD+(port_numb<<1), 0x46);
+				break;
+			case NVP6124_OUTMODE_2MUX_HD_X:
+			case NVP6124_OUTMODE_2MUX_FHD_X:
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+				HDDVR_i2c_WriteByte(addr, 0x55, 0x00);
+				HDDVR_i2c_WriteByte(addr, 0x56, 0x11);
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+				HDDVR_i2c_WriteByte(addr, 0xC2+(port_numb<<1), port_numb==0?0x03:0x12);
+				HDDVR_i2c_WriteByte(addr, 0xC3+(port_numb<<1), port_numb==0?0x03:0x12);
+				HDDVR_i2c_WriteByte(addr, 0xC6, HDDVR_i2c_ReadByte(addr, 0xC4));
+				HDDVR_i2c_WriteByte(addr, 0xC7, HDDVR_i2c_ReadByte(addr, 0xC5));
+				tmpValue = (port_mode==NVP6124_VI_1080P_2530?1:2);
+				port_numb>0? HDDVR_i2c_WriteByte(addr, 0xC8, (tmpValue<<4)) : HDDVR_i2c_WriteByte(addr, 0xC9, (tmpValue<<4) | tmpValue);
+				HDDVR_i2c_WriteByte(addr, 0xCA, 0xFF);
+				port_mode==NVP6124_VI_SD? HDDVR_i2c_WriteByte(addr, 0xCD+(port_numb<<1), 0x46) : HDDVR_i2c_WriteByte(addr, 0xCD+(port_numb<<1), 0x66);
+				break;
+			case NVP6124_OUTMODE_2MUX_HD:
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+				HDDVR_i2c_WriteByte(addr, 0x55, 0x00);
+				HDDVR_i2c_WriteByte(addr, 0x56, 0x11);
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+				HDDVR_i2c_WriteByte(addr, 0xC2+(port_numb<<1), port_numb==0?0x03:0x12);
+				HDDVR_i2c_WriteByte(addr, 0xC3+(port_numb<<1), port_numb==0?0x03:0x12);
+				HDDVR_i2c_WriteByte(addr, 0xC6, HDDVR_i2c_ReadByte(addr, 0xC4));
+				HDDVR_i2c_WriteByte(addr, 0xC7, HDDVR_i2c_ReadByte(addr, 0xC5));
+				tmpValue = (port_mode==NVP6124_VI_1080P_2530?1:2);
+				if(port_numb > 0) {
+					HDDVR_i2c_WriteByte(addr, 0xC8, (tmpValue<<4));
+				}
+				else {
+					HDDVR_i2c_WriteByte(addr, 0xC9, (tmpValue<<4) | tmpValue);
+				}
+				HDDVR_i2c_WriteByte(addr, 0xCA, 0xFF);
+				HDDVR_i2c_WriteByte(addr, 0xCD+(port_numb<<1), 0x66);
+				break;
+			case NVP6124_OUTMODE_4MUX_SD:
+			case NVP6124_OUTMODE_4MUX_HD:
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+				HDDVR_i2c_WriteByte(addr, 0x56, 0x32);
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+				HDDVR_i2c_WriteByte(addr, 0xC2+port_numb*2, 0x10);
+				HDDVR_i2c_WriteByte(addr, 0xC3+port_numb*2, 0x32);
+				HDDVR_i2c_WriteByte(addr, 0xC6, HDDVR_i2c_ReadByte(addr, 0xC4));
+				HDDVR_i2c_WriteByte(addr, 0xC7, HDDVR_i2c_ReadByte(addr, 0xC5));
+				HDDVR_i2c_WriteByte(addr, 0xC8+port_numb, 0x88);
+				HDDVR_i2c_WriteByte(addr, 0xCD+(port_numb<<1), 0x66);
+				break;
+			case NVP6124_OUTMODE_4MUX_HD_X:
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+				HDDVR_i2c_WriteByte(addr, 0x56, 0x32);
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+				HDDVR_i2c_WriteByte(addr, 0xC2+port_numb*2, 0x10);
+				HDDVR_i2c_WriteByte(addr, 0xC3+port_numb*2, 0x32);
+				HDDVR_i2c_WriteByte(addr, 0xC6, HDDVR_i2c_ReadByte(addr, 0xC4));
+				HDDVR_i2c_WriteByte(addr, 0xC7, HDDVR_i2c_ReadByte(addr, 0xC5));
+				HDDVR_i2c_WriteByte(addr, 0xC8+port_numb, 0x33);
+				HDDVR_i2c_WriteByte(addr, 0xCD+(port_numb<<1), 0x66);
+				break;
+			case NVP6124_OUTMODE_2MUX_FHD:
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+				HDDVR_i2c_WriteByte(addr, 0x56, 0x10);
+				HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+				HDDVR_i2c_WriteByte(addr, 0x88+chid*2, 0x88);
+				HDDVR_i2c_WriteByte(addr, 0x89+chid*2, 0x88);
+				HDDVR_i2c_WriteByte(addr, 0x8C+chid*2, 0x42);
+				HDDVR_i2c_WriteByte(addr, 0x8D+chid*2, 0x42);
+				HDDVR_i2c_WriteByte(addr, 0xC2+port_numb*2, chid==0?0x10:0x32);
+				HDDVR_i2c_WriteByte(addr, 0xC3+port_numb*2, chid==0?0x10:0x32);
+				HDDVR_i2c_WriteByte(addr, 0xC6, HDDVR_i2c_ReadByte(addr, 0xC4));
+				HDDVR_i2c_WriteByte(addr, 0xC7, HDDVR_i2c_ReadByte(addr, 0xC5));
+				HDDVR_i2c_WriteByte(addr, 0xC8+port_numb, 0x22);
+				HDDVR_i2c_WriteByte(addr, 0xCD+(port_numb<<1), 0x46);
+				break;
+			default:
+				break;
+	}
+	I2C_UnLock();
+}
 
 /*
 nvp6124 has 4 BT656 output ports.
@@ -1793,7 +2171,7 @@ void nvp6124_outport_1mux(int addr, int Chnl)
 	unsigned char tmpRead;
 
 	if(0 != HDAHD_ChipGetMap(Chnl, &tmpRealChip, &tmpRealChnl, &tmpRealAddr)) {
-		return HDVLOSS_ERROR;
+		return ;
 	}
 
 	I2C_InLock();
@@ -1936,8 +2314,8 @@ void nvp6114a_outport_2mux(int addr, int port_numb, int port_mode)
 	HDDVR_i2c_WriteByte(addr, 0xC6, HDDVR_i2c_ReadByte(addr, 0xC4));
 	HDDVR_i2c_WriteByte(addr, 0xC7, HDDVR_i2c_ReadByte(addr, 0xC5));
 
-	tmpValue = ((port_mode==NVP6124_VI_1080P_2530)?1:2);
-	if(port_numb == 0) {
+	tmpValue = (port_mode==NVP6124_VI_1080P_2530?1:2);
+	if(port_numb > 0) {
 		HDDVR_i2c_WriteByte(addr, 0xC8, (tmpValue<<4));
 	}
 	else {
@@ -1946,8 +2324,12 @@ void nvp6114a_outport_2mux(int addr, int port_numb, int port_mode)
 
 	HDDVR_i2c_WriteByte(addr, 0xCA, 0xFF);    //打开端口[3:0]和时钟[7:4],和硬件相关。
 
-	HDDVR_i2c_WriteByte(addr, 0xCD+port_numb*2,
-		(port_mode == NVP6124_VI_SD) ? 0x46 : 0x66);    //时钟频率设置
+	if(port_mode == NVP6124_VI_SD) {
+		HDDVR_i2c_WriteByte(addr, 0xCD+port_numb*2, 0x46);    //时钟频率设置
+	}
+	else {
+		HDDVR_i2c_WriteByte(addr, 0xCD+port_numb*2, 0x66);
+	}
 
 	HDDVR_i2c_WriteByte(addr, 0xFF, 0x00); //Cross 01 & 23 Channel
 	HDDVR_i2c_WriteByte(addr, 0x55, 0x00);
@@ -2000,13 +2382,11 @@ void nvp6114a_outport_4mux(int addr, unsigned char port1_mode)
 	printf("nvp6114A_outport_4mux setting\n");
 }
 
-#define NVP6124_CHNL_NUM_MAX (16)
-
-int nvp6124_videoformat[NVP6124_CHNL_NUM_MAX]={0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 //#define _EQ_ADJ_COLOR_
 volatile unsigned char stage_update[NVP6124_CHNL_NUM_MAX];
 
-unsigned char ANALOG_EQ_1080P[8]  = {0x13,0x03,0x53,0x73,0x73,0x73,0x73,0x73};
+unsigned char ANALOG_EQ_1080P_BYPASS[8]  = {0x13,0x03,0x53,0x73,0x73,0x73,0x73,0x73};
+unsigned char ANALOG_EQ_1080P_LPF30M[8]  = {0x11,0x01,0x51,0x71,0x71,0x71,0x71,0x71};
 unsigned char DIGITAL_EQ_1080P[8] = {0x00,0x00,0x00,0x00,0x8B,0x8F,0x8F,0x8F};
 #ifdef _EQ_ADJ_COLOR_
 unsigned char BRI_EQ_1080P[8]    = {0xF4,0xF4,0xF4,0xF4,0xF8,0xF8,0xF8,0xF8};
@@ -2192,13 +2572,280 @@ unsigned int is_bypass_mode(unsigned int c_stage, unsigned int c_status, unsigne
 	return 0;
 }
 
+#define AHD2_PEL_BAUD	0x02
+#define AHD2_PEL_LINE	0x07
+#define AHD2_PEL_SYNC	0x0D
+#define AHD2_PEL_EVEN	0x2F
+#define AHD2_FHD_BAUD	0x00
+#define AHD2_FHD_LINE	0x03
+#define AHD2_FHD_LINES	0x05
+#define AHD2_FHD_BYTE	0x0A
+#define AHD2_FHD_MODE	0x0B
+
+#define ACP_CLR				0x3A
+#define ACP_CLR_CNT			1
+#define ACP_SET_CNT			(ACP_CLR_CNT+1)
+#define ACP_READ_START_CNT	(ACP_SET_CNT+3)
+#define LOOP_BUF_SIZE		20
+#define RETRY_CNT			5
+
 volatile unsigned char c_same_cnt[NVP6124_CHNL_NUM_MAX],y_same_cnt[NVP6124_CHNL_NUM_MAX];
-volatile unsigned char check_c_stage[NVP6124_CHNL_NUM_MAX], check_c_stage_back[NVP6124_CHNL_NUM_MAX];
-volatile unsigned char check_y_stage[NVP6124_CHNL_NUM_MAX], check_y_stage_back[NVP6124_CHNL_NUM_MAX];
 volatile unsigned char vidmode_back[NVP6124_CHNL_NUM_MAX];
 volatile unsigned char video_on[NVP6124_CHNL_NUM_MAX];
+volatile unsigned char loop_cnt[NVP6124_CHNL_NUM_MAX];
+volatile unsigned char eq_loop_cnt[NVP6124_CHNL_NUM_MAX];
+volatile unsigned char loop_cnt[NVP6124_CHNL_NUM_MAX];
+volatile unsigned char one_setting[NVP6124_CHNL_NUM_MAX]={0,};
+volatile unsigned char bypass_flag[NVP6124_CHNL_NUM_MAX]={0,};
+volatile unsigned char bypass_flag_retry[NVP6124_CHNL_NUM_MAX];
+volatile unsigned char ystage_flag_retry[NVP6124_CHNL_NUM_MAX];
+volatile unsigned char cstage_flag_retry[NVP6124_CHNL_NUM_MAX];
+volatile unsigned char acp_isp_wr_en[NVP6124_CHNL_NUM_MAX]={0,};
+
+unsigned char check_c_stage[NVP6124_CHNL_NUM_MAX][LOOP_BUF_SIZE];
+unsigned char check_y_stage[NVP6124_CHNL_NUM_MAX][LOOP_BUF_SIZE];
+unsigned char acp_val[NVP6124_CHNL_NUM_MAX][LOOP_BUF_SIZE];
+unsigned char acp_ptn[NVP6124_CHNL_NUM_MAX][LOOP_BUF_SIZE];
+
+void acp_reg_rx_clear(unsigned char tmpAddr, unsigned char ch)
+{
+	I2C_InLock();
+	HDDVR_i2c_WriteByte(tmpAddr, 0xFF, 0x03+((ch%4)/2));
+	HDDVR_i2c_WriteByte(tmpAddr, ACP_CLR+((ch%2)*0x80), 0x01);
+	I2C_UnLock();
+	usleep(10*1000);
+	I2C_InLock();
+	HDDVR_i2c_WriteByte(tmpAddr, ACP_CLR+((ch%2)*0x80), 0x00);
+	I2C_UnLock();
+}
+
+void init_acp_ex(unsigned char tmpAddr, unsigned char ch)
+{
+	I2C_InLock();
+	HDDVR_i2c_WriteByte(tmpAddr, 0xFF, 0x01);
+	//Decoder TX Setting
+	HDDVR_i2c_WriteByte(tmpAddr, 0xBC, 0xDD);
+	HDDVR_i2c_WriteByte(tmpAddr, 0xBD, 0xED);
+	I2C_UnLock();
+	acp_reg_rx_clear(tmpAddr, ch);
+}
+
+void acp_each_setting(unsigned char addr, unsigned char ch, int ch_mode_status, unsigned char vidmode)
+{
+	HDDVR_i2c_WriteByte(addr, 0xFF, 0x03+((ch%4)/2));
+	if(addr == NVP6124_VI_720P_2530)
+	{
+		HDDVR_i2c_WriteByte(addr, AHD2_FHD_BAUD+((ch%2)*0x80), 0x0E);
+		HDDVR_i2c_WriteByte(addr, AHD2_FHD_LINE+((ch%2)*0x80), vidmode%2? 0x0D:0x0E);
+	}
+	else if(addr == NVP6124_VI_1080P_2530)
+	{
+		HDDVR_i2c_WriteByte(addr, AHD2_FHD_BAUD+((ch%2)*0x80), 0x0E);
+		HDDVR_i2c_WriteByte(addr, AHD2_FHD_LINE+((ch%2)*0x80), 0x0E);
+	}
+	HDDVR_i2c_WriteByte(addr, AHD2_PEL_SYNC+((ch%2)*0x80), 0x14);
+	HDDVR_i2c_WriteByte(addr, AHD2_PEL_SYNC+((ch%2)*0x80)+1, 0x00);
+	HDDVR_i2c_WriteByte(addr, AHD2_FHD_LINES+((ch%2)*0x80), 0x07);
+	HDDVR_i2c_WriteByte(addr, AHD2_FHD_BYTE+((ch%2)*0x80), 0x03);
+	HDDVR_i2c_WriteByte(addr, AHD2_FHD_MODE+((ch%2)*0x80), 0x10);
+	HDDVR_i2c_WriteByte(addr, AHD2_PEL_EVEN+((ch%2)*0x80), 0x00);
+
+	//Decoder RX Setting
+	HDDVR_i2c_WriteByte(addr, 0xFF, 0x05+(ch%4));
+	HDDVR_i2c_WriteByte(addr, 0x30, 0x00);
+	HDDVR_i2c_WriteByte(addr, 0x31, 0x01);
+	HDDVR_i2c_WriteByte(addr, 0x32, 0x64);
+	HDDVR_i2c_WriteByte(addr, 0x7C, 0x11);
+	if(nvp6124_videoformat[ch] == NVP6124_VI_720P_2530)
+	{
+		HDDVR_i2c_WriteByte(addr, 0x7D, 0x80);
+	}
+	else if(nvp6124_videoformat[ch] == NVP6124_VI_1080P_2530)
+	{
+		HDDVR_i2c_WriteByte(addr, 0x7D, 0x80);
+	}
+	HDDVR_i2c_WriteByte(addr, 0xFF, 0x03+((ch%4)/2));
+
+	if(ch_mode_status == NVP6124_VI_720P_2530)
+	{
+		HDDVR_i2c_WriteByte(addr, 0x62+((ch%2)*0x80), vidmode%2? 0x05:0x06);	// Camera TX DATA Check
+		HDDVR_i2c_WriteByte(addr, 0x68+((ch%2)*0x80), 0x40); // RX size
+	}
+	else if(nvp6124_videoformat[ch] == NVP6124_VI_1080P_2530)
+	{
+		HDDVR_i2c_WriteByte(addr, 0x62+((ch%2)*0x80), 0x06); // Camera TX DATA Check
+		HDDVR_i2c_WriteByte(addr, 0x68+((ch%2)*0x80), 0x70); // RX size
+	}
+
+	HDDVR_i2c_WriteByte(addr, 0x60+((ch%2)*0x80), 0x55);
+	HDDVR_i2c_WriteByte(addr, 0x63+((ch%2)*0x80), 0x01);
+	HDDVR_i2c_WriteByte(addr, 0x66+((ch%2)*0x80), 0x80);
+	HDDVR_i2c_WriteByte(addr, 0x67+((ch%2)*0x80), 0x01);
+}
+
+unsigned char read_acp_status(int addr, unsigned char ch)
+{
+	unsigned char val;
+
+	HDDVR_i2c_WriteByte(addr, 0xFF, 0x03+((ch%4)/2));
+	val = HDDVR_i2c_ReadByte(addr, 0x78+((ch%2)*0x80));
+
+	return val;
+}
+
+unsigned char read_acp_pattern(int addr, unsigned char ch)
+{
+	unsigned char val;
+
+	HDDVR_i2c_WriteByte(addr, 0xFF, 0x03+((ch%4)/2));
+	val = HDDVR_i2c_ReadByte(addr,0x78+((ch%2)*0x80)+1);
+	val = (val >> 2) & 0x03;
+
+	return val;
+}
+
+unsigned char compare_arr(unsigned char cur_ptr, unsigned char *buf)
+{
+	unsigned char start_ptr;
+
+	if(cur_ptr == 1)		start_ptr = LOOP_BUF_SIZE - 1;
+	else if(cur_ptr == 0)	start_ptr = LOOP_BUF_SIZE - 2;
+	else					start_ptr = cur_ptr - 2;
+
+	if((buf[start_ptr] == buf[(start_ptr+1)%LOOP_BUF_SIZE]) 					&&
+	   (buf[(start_ptr+1)%LOOP_BUF_SIZE] == buf[(start_ptr+2)%LOOP_BUF_SIZE]))
+		return buf[start_ptr];
+	else
+		return 0xFF;
+}
+
+void init_eq_stage(int addr, unsigned char ch, int ch_mode_status)
+{
+	unsigned char default_stage=0;
+
+	if(ch_mode_status == NVP6124_VI_720P_2530)
+	{
+		HDDVR_i2c_WriteByte(addr, 0xFF,0x05+ch%4);
+		HDDVR_i2c_WriteByte(addr, 0x58, ANALOG_EQ_720P[default_stage]);
+		HDDVR_i2c_WriteByte(addr, 0xFF,((ch%4)<2)?0x0A:0x0B);
+		HDDVR_i2c_WriteByte(addr, (ch%2==0)?0x3B:0xBB, DIGITAL_EQ_720P[default_stage]);
+	}
+	else
+	{
+		HDDVR_i2c_WriteByte(addr, 0xFF,0x05+ch%4);
+		if(HDAHD_REVID[ch/4] == 0x20)
+			HDDVR_i2c_WriteByte(addr, 0x58, ANALOG_EQ_1080P_BYPASS[default_stage]);
+		else
+			HDDVR_i2c_WriteByte(addr, 0x58, ANALOG_EQ_1080P_LPF30M[default_stage]);
+		HDDVR_i2c_WriteByte(addr, 0xFF,((ch%4)<2)?0x0A:0x0B);
+		HDDVR_i2c_WriteByte(addr, (ch%2==0)?0x3B:0xBB, DIGITAL_EQ_1080P[default_stage]);
+	}
+
+	memset(check_y_stage[ch],0x00,sizeof(check_y_stage[ch]));
+}
+
+static void nvp6124_sw_reset(int addr, unsigned char ch)
+{
+	unsigned char tmp;
+
+	HDDVR_i2c_WriteByte(addr, 0xFF, 0x01);
+	tmp = HDDVR_i2c_ReadByte( addr, 0x97) & 0x0F;
+	tmp = tmp & (~(1<<(ch%4)));
+	HDDVR_i2c_WriteByte(addr, 0x97, tmp);
+	HDDVR_i2c_WriteByte(addr, 0x97, 0x0F);
+}
+
+void bubble_sort(unsigned char *buf ,unsigned char len)
+{
+	int i,j,tmp;
+
+	for(i = 0; i < len; i++)
+	{
+		for(j = 0; j < len - 1 ; j++)
+		{
+			if(buf[j] > buf[j+1])
+			{
+				tmp = buf[j];
+				buf[j] = buf[j+1];
+				buf[j+1] = tmp;
+			}
+		}
+	}
+}
+
+unsigned char calc_arr_mean(unsigned char *buf)
+{
+	unsigned char cnt,tmp=0,zero_cnt=0;
+	unsigned char tmpbuf[LOOP_BUF_SIZE];
+
+	memcpy(tmpbuf,buf,LOOP_BUF_SIZE);
+
+	bubble_sort(tmpbuf, LOOP_BUF_SIZE);
+
+	for(cnt = 0; cnt < LOOP_BUF_SIZE; cnt++)
+	{
+		if(tmpbuf[cnt] == 0) zero_cnt++;
+
+		tmp = tmp + tmpbuf[cnt];
+	}
+	tmp = abs( tmp / (LOOP_BUF_SIZE-zero_cnt));
+
+	return tmp;
+}
+
+unsigned char decide_noptn_stage(unsigned char agcval)
+{
+	unsigned char stage;
+
+	if	   (agcval <= 0x18)	stage = 1;
+	else if(agcval <= 0x1A)	stage = 2;
+	else if(agcval <= 0x1C)	stage = 3;
+	else if(agcval <= 0x1E)	stage = 4;
+	else if(agcval <= 0x20)	stage = 5;
+	else					stage = 6;
+
+	return stage;
+}
+
+unsigned char calc_stage_gap(unsigned char *buf)
+{
+	unsigned char cnt,zero_cnt=0;
+	unsigned char tmpbuf[LOOP_BUF_SIZE];
+
+	memcpy(tmpbuf,buf,LOOP_BUF_SIZE);
+
+	bubble_sort(tmpbuf, LOOP_BUF_SIZE);
+
+	for(cnt = 0; cnt < LOOP_BUF_SIZE; cnt++)
+	{
+		if(tmpbuf[cnt] == 0) zero_cnt++;
+	}
+
+	return(abs(tmpbuf[LOOP_BUF_SIZE-1] - tmpbuf[zero_cnt]));
+}
+
+void lossfakechannel(int addr, unsigned char ch, unsigned char bypassflag)
+{
+	unsigned char tmp;
+
+	HDDVR_i2c_WriteByte(addr, 0xFF, 0x00);
+	tmp = HDDVR_i2c_ReadByte(addr, 0x7A+(ch<2?0x00:0x01));
+	if(ch%2 == 0)
+		tmp = tmp & 0xF0;
+	else
+		tmp = tmp & 0x0F;
+
+	if(bypassflag)
+		tmp = tmp | (0x0F << (ch%2)*4);
+	else
+		tmp = tmp | (0x01 << (ch%2)*4);
+
+	HDDVR_i2c_WriteByte(addr, 0x7A+(ch<2?0x00:0x01),tmp);
+}
+
 void nvp6124_set_equalizer(int addr, int chnl, int ch_vloss, int ch_mode_status)
 {
+	unsigned char i, tmp_acp_val, tmp_acp_ptn, tmp_y_stage, tmp_c_stage;
 	unsigned char vidmode[NVP6124_CHNL_NUM_MAX];
 	unsigned char agc_lock;
 	unsigned int  agc_val[NVP6124_CHNL_NUM_MAX];
@@ -2206,6 +2853,7 @@ void nvp6124_set_equalizer(int addr, int chnl, int ch_vloss, int ch_mode_status)
 	unsigned int  y_ref_status[NVP6124_CHNL_NUM_MAX];
 	unsigned int  y_ref2_status[NVP6124_CHNL_NUM_MAX];
 	unsigned char bw_on[NVP6124_CHNL_NUM_MAX];
+	unsigned char stage_gap;
 
 	int ch = chnl;
 
@@ -2240,133 +2888,323 @@ void nvp6124_set_equalizer(int addr, int chnl, int ch_vloss, int ch_mode_status)
 
 	I2C_UnLock();
 
-	if(vidmode[ch] >= 4) {
+	if(vidmode[ch] >= 4)
+	{
 		if((!ch_vloss) && (((agc_lock>>(ch%4))&0x01) == 0x01))
 			video_on[ch] = 1;
 		else
 			video_on[ch] = 0;
 	}
-	else {
+	else
+	{
 		video_on[ch] = 0;
 	}
 
 	if((ch_mode_status == NVP6124_VI_1080P_2530)
-		|| (ch_mode_status == NVP6124_VI_720P_2530)) {
+		|| (ch_mode_status == NVP6124_VI_720P_2530))
+	{
 
 		I2C_InLock();
 
-		if(video_on[ch]) {
-			check_c_stage[ch] = get_ceq_stage(ch_mode_status, acc_gain_sts[ch]);
-			check_y_stage[ch] = get_yeq_stage(ch_mode_status, y_ref_status[ch]);
+		if(video_on[ch])
+		{
+			if(loop_cnt[ch] != 0xFF)
+			{
+				loop_cnt[ch]++;
+				if(loop_cnt[ch] > 200) loop_cnt[ch] = ACP_READ_START_CNT;
 
-			if(ch_mode_status == NVP6124_VI_720P_2530) {
-				if(is_bypass_mode(check_c_stage[ch], acc_gain_sts[ch],agc_val[ch], bw_on[ch],y_ref2_status[ch]))
-					check_y_stage[ch] = 7;
+				if(loop_cnt[ch] == ACP_CLR_CNT)
+				{
+					HDDVR_i2c_WriteByte(addr, 0xFF, 0x03+((ch%4)/2));
+					HDDVR_i2c_WriteByte(addr, ACP_CLR+((ch%2)*0x80), 0x01);
 
-				if(((check_c_stage[ch] == 5)   && y_ref2_status[ch] >= 0x1A0) ||
-					(acc_gain_sts[ch] == 0x7FF && y_ref2_status[ch] >= 0x1B0))
-					check_y_stage[ch] = 8;
+					I2C_UnLock();
+					usleep(10 * 1000);
+					I2C_InLock();
 
-				if(y_same_cnt[ch] != 0xFF) {
-					if(check_c_stage[ch] == check_c_stage_back[ch]) {
-						c_same_cnt[ch]++;
-						if(c_same_cnt[ch] > 200 ) c_same_cnt[ch] = 5;
-					}
-					else {
-						c_same_cnt[ch] = 0;
-					}
-
-					if(check_y_stage[ch] == check_y_stage_back[ch]) {
-						y_same_cnt[ch]++;
-						if(y_same_cnt[ch] > 200 ) y_same_cnt[ch] = 5;
-					}
-					else {
-						y_same_cnt[ch] = 0;
-					}
-
-					if(c_same_cnt[ch] != y_same_cnt[ch]) {
-						c_same_cnt[ch] = 0;
-						y_same_cnt[ch] = 0;
-					}
+					HDDVR_i2c_WriteByte(addr, ACP_CLR+((ch%2)*0x80), 0x00);
+				}
+				else
+				{
+					acp_each_setting(addr, ch, ch_mode_status, vidmode[ch]);
 				}
 
-				if((c_same_cnt[ch]==4) && (y_same_cnt[ch]==4))
-					stage_update[ch] = 1;
-				else
-					stage_update[ch] = 0;
+				eq_loop_cnt[ch]++;
+				eq_loop_cnt[ch] %= LOOP_BUF_SIZE;
+
+				check_c_stage[ch][eq_loop_cnt[ch]] = get_ceq_stage(ch_mode_status, acc_gain_sts[ch]);
+				check_y_stage[ch][eq_loop_cnt[ch]] = get_yeq_stage(ch_mode_status, y_ref_status[ch]);
+				acp_val[ch][eq_loop_cnt[ch]] = read_acp_status(addr, ch);
+				acp_ptn[ch][eq_loop_cnt[ch]] = read_acp_pattern(addr, ch);
 			}
-			else {
-				if(y_same_cnt[ch] != 0xFF) {
-					if(check_y_stage[ch] == check_y_stage_back[ch]) {
-						y_same_cnt[ch]++;
-						if(y_same_cnt[ch] > 200 ) y_same_cnt[ch] = 5;
+
+			if(ch_mode_status == NVP6124_VI_720P_2530)
+			{
+				if((loop_cnt[ch] != 0xFF) && (loop_cnt[ch] >= ACP_READ_START_CNT))
+				{
+					if(one_setting[ch] == 0)
+					{
+						bypass_flag[ch] = 0xFF;
+						tmp_acp_val = compare_arr(eq_loop_cnt[ch],acp_val[ch]);
+						tmp_acp_ptn = compare_arr(eq_loop_cnt[ch],acp_ptn[ch]);
+						if(ch == 0)
+						{
+						}
+
+						if((tmp_acp_val == 0x55) && (tmp_acp_ptn == 0x01))
+						{
+							bypass_flag[ch] = 0;
+							one_setting[ch] = 1;
+						}
+						else
+						{
+							bypass_flag_retry[ch]++;
+							bypass_flag_retry[ch] %= 200;
+							if(bypass_flag_retry[ch] == RETRY_CNT)
+							{
+								bypass_flag[ch] = 1;
+								one_setting[ch] = 1;
+							}
+						}
 					}
-					else {
-						y_same_cnt[ch]=0;
+
+					if(bypass_flag[ch] == 1)
+					{
+						stage_update[ch] = 1;
+					}
+					else if(bypass_flag[ch] == 0)
+					{
+						if(ch == 0)
+						{
+						}
+
+						if( loop_cnt[ch] == (ACP_READ_START_CNT+bypass_flag_retry[ch]))
+						{
+							init_eq_stage(addr, ch, ch_mode_status);
+							if(ch == 0)
+							{
+							}
+						}
+						else if(loop_cnt[ch] >= (ACP_READ_START_CNT+bypass_flag_retry[ch]+3))
+						{
+							tmp_y_stage = compare_arr(eq_loop_cnt[ch],check_y_stage[ch]);
+							tmp_c_stage = compare_arr(eq_loop_cnt[ch],check_c_stage[ch]);
+							if(ch == 0)
+							{
+							}
+
+							if((tmp_c_stage != 0xFF) && (tmp_y_stage != 0xFF))
+								stage_update[ch] = 1;
+							else
+							{
+								if(tmp_y_stage == 0xFF)
+								{
+									ystage_flag_retry[ch]++;
+									ystage_flag_retry[ch] %= 200;
+								}
+								if(tmp_c_stage == 0xFF)
+								{
+									cstage_flag_retry[ch]++;
+									cstage_flag_retry[ch] %= 200;
+								}
+
+								if((ystage_flag_retry[ch]==RETRY_CNT)||(cstage_flag_retry[ch]==RETRY_CNT))
+								{
+									stage_update[ch] = 1;
+									check_y_stage[ch][eq_loop_cnt[ch]] = calc_arr_mean(check_y_stage[ch]);
+								}
+								else
+								{
+									stage_gap = abs(decide_noptn_stage(agc_val[ch]) - check_y_stage[ch][eq_loop_cnt[ch]]);
+
+									if((calc_stage_gap(check_y_stage[ch]) >= 2) || (stage_gap >= 3))
+									{
+										init_eq_stage(addr, ch, ch_mode_status);
+										nvp6124_sw_reset(addr, ch);
+									}
+								}
+							}
+						}
+					}
+					else
+					{
+						stage_update[ch] = 0;
+					}
+
+					if(bypass_flag[ch] == 1)
+					{
+						check_y_stage[ch][eq_loop_cnt[ch]] = 7;
+						if(((check_c_stage[ch][eq_loop_cnt[ch]] == 5)
+							&& y_ref2_status[ch] >= 0x1A0)
+							||(acc_gain_sts[ch] == 0x7FF
+							&& y_ref2_status[ch] >= 0x1B0))
+						{
+							check_y_stage[ch][eq_loop_cnt[ch]] = 8;
+						}
 					}
 				}
 
-				if((y_same_cnt[ch]==4))
-					stage_update[ch] = 1;
-				else
-					stage_update[ch] = 0;
+			}
+			else
+			{
+				if((loop_cnt[ch] != 0xFF) && (loop_cnt[ch] >= ACP_READ_START_CNT))
+				{
+					if(one_setting[ch] == 0)
+					{
+						bypass_flag[ch] = 0xFF;
+						tmp_acp_val = compare_arr(eq_loop_cnt[ch],acp_val[ch]);
+						tmp_acp_ptn = compare_arr(eq_loop_cnt[ch],acp_ptn[ch]);
+
+						if((tmp_acp_val == 0x55) && (tmp_acp_ptn == 0x01))
+						{
+							bypass_flag[ch] = 0;
+							one_setting[ch] = 1;
+						}
+						else
+						{
+							bypass_flag_retry[ch]++;
+							bypass_flag_retry[ch] %= 200;
+							if(bypass_flag_retry[ch] == RETRY_CNT)
+							{
+								bypass_flag[ch] = 1;
+								one_setting[ch] = 1;
+								lossfakechannel(addr, ch, bypass_flag[ch]);
+							}
+						}
+					}
+
+					if(bypass_flag[ch] == 1)
+					{
+						stage_update[ch] = 1;
+					}
+					else if(bypass_flag[ch] == 0)
+					{
+						if(ch == 0)
+						{
+						}
+
+						if( loop_cnt[ch] == (ACP_READ_START_CNT+bypass_flag_retry[ch]))
+						{
+							init_eq_stage(addr, ch, ch_mode_status);
+							if(ch == 0)
+							{
+							}
+						}
+						else if(loop_cnt[ch] >= (ACP_READ_START_CNT+bypass_flag_retry[ch]+3))
+						{
+							tmp_y_stage = compare_arr(eq_loop_cnt[ch],check_y_stage[ch]);
+							if(tmp_y_stage != 0xFF)
+							{
+								stage_update[ch] = 1;
+							}
+							else
+							{
+								if(tmp_y_stage == 0xFF)
+								{
+									ystage_flag_retry[ch]++;
+									ystage_flag_retry[ch] %= 200;
+								}
+
+								if(ystage_flag_retry[ch]==RETRY_CNT)
+								{
+									stage_update[ch] = 1;
+									check_y_stage[ch][eq_loop_cnt[ch]] = calc_arr_mean(check_y_stage[ch]);
+								}
+								else
+								{
+									stage_gap = abs(decide_noptn_stage(agc_val[ch]) - check_y_stage[ch][eq_loop_cnt[ch]]);
+
+									if((calc_stage_gap(check_y_stage[ch]) >= 2) || (stage_gap >= 3))
+									{
+										init_eq_stage(addr, ch, ch_mode_status);
+										nvp6124_sw_reset(addr, ch);
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
-		else {
+		else
+		{
 			if(vidmode_back[ch] >= 0x04) 
+			{
 				stage_update[ch] = 1;
+			}
 			else
+			{
 				stage_update[ch] = 0;
+			}
 
-			c_same_cnt[ch]=0;
-			y_same_cnt[ch]=0;
-			check_c_stage[ch]=0;
-			check_c_stage_back[ch]=0xFF;
-			check_y_stage[ch]=0;
-			check_y_stage_back[ch]=0xFF;
-			eq_stage[ch] = 0;
+			for(i=0;i<LOOP_BUF_SIZE;i++)
+			{
+				check_c_stage[ch][i]=0;
+				check_y_stage[ch][i]=0;
+				acp_val[ch][i] = 0;
+				acp_ptn[ch][i] = 0;
+			}
+			eq_loop_cnt[ch]=0;
+			check_y_stage[ch][eq_loop_cnt[ch]] = 1;
+			loop_cnt[ch] =0;
+			bypass_flag_retry[ch]=0;
+			ystage_flag_retry[ch]=0;
+			cstage_flag_retry[ch]=0;
+			one_setting[ch] = 0;
+			acp_isp_wr_en[ch] = 0;
+			lossfakechannel(addr, ch, 0);
 		}
 
 		I2C_UnLock();
 
 		I2C_InLock();
+		if(stage_update[ch])
+		{
+			stage_update[ch] = 0;
+			acp_isp_wr_en[ch] = 1;
+			eq_stage[ch] = check_y_stage[ch][eq_loop_cnt[ch]];
 
-		if(stage_update[ch]) {
-			if(video_on[ch]) y_same_cnt[ch] = 0xFF;
-			eq_stage[ch] = check_y_stage[ch];
+			if(video_on[ch])
+			{
+				loop_cnt[ch] = 0xFF;
+			}
 
-			if(ch_mode_status == NVP6124_VI_720P_2530) {
+			if(ch_mode_status == NVP6124_VI_720P_2530)
+			{
 				HDDVR_i2c_WriteByte(addr, 0xFF,0x05+ch%4);
 				HDDVR_i2c_WriteByte(addr, 0x58, ANALOG_EQ_720P[eq_stage[ch]]);
-				HDDVR_i2c_WriteByte(addr, 0xFF,((ch%4)<2)?0x0A:0x0B);         
+				HDDVR_i2c_WriteByte(addr, 0xFF,((ch%4)<2)?0x0A:0x0B);
 				HDDVR_i2c_WriteByte(addr, (ch%2==0)?0x3B:0xBB, DIGITAL_EQ_720P[eq_stage[ch]]);
 			}
-			else {
+			else
+			{
 				HDDVR_i2c_WriteByte(addr, 0xFF,0x05+ch%4);
-				HDDVR_i2c_WriteByte(addr, 0x58, ANALOG_EQ_1080P[eq_stage[ch]]);
-				HDDVR_i2c_WriteByte(addr, 0xFF,((ch%4)<2)?0x0A:0x0B);         
+				if(HDAHD_REVID[ch/4] == 0x20)
+					HDDVR_i2c_WriteByte(addr, 0x58, ANALOG_EQ_1080P_BYPASS[eq_stage[ch]]);
+				else
+					HDDVR_i2c_WriteByte(addr, 0x58, ANALOG_EQ_1080P_LPF30M[eq_stage[ch]]);
+				HDDVR_i2c_WriteByte(addr, 0xFF,((ch%4)<2)?0x0A:0x0B);
 				HDDVR_i2c_WriteByte(addr, (ch%2==0)?0x3B:0xBB, DIGITAL_EQ_1080P[eq_stage[ch]]);
 			}
+
+			if(eq_stage[ch] != 7)
+			{
 			#ifdef _EQ_ADJ_COLOR_
-			nvp6124_brightness_eq(addr, ch, ch_mode_status, eq_stage[ch]);
-			nvp6124_contrast_eq(addr, ch, ch_mode_status, eq_stage[ch]);
-			nvp6124_saturation_eq(addr, ch, ch_mode_status, eq_stage[ch]);
+				nvp6124_brightness_eq(addr, ch, ch_mode_status, eq_stage[ch]);
+				nvp6124_contrast_eq(addr, ch, ch_mode_status, eq_stage[ch]);
+				nvp6124_saturation_eq(addr, ch, ch_mode_status, eq_stage[ch]);
 			#endif
-			nvp6124_sharpness_eq(addr, ch, ch_mode_status, eq_stage[ch]);
-			nvp6124_peaking_eq(addr, ch, ch_mode_status, eq_stage[ch]);
-			nvp6124_ctigain_eq(addr, ch, ch_mode_status, eq_stage[ch]);
-			nvp6124_c_filter_eq(addr, ch, ch_mode_status, eq_stage[ch]);
-			nvp6124_ugain_eq(addr, ch, ch_mode_status, eq_stage[ch]);
-			nvp6124_vgain_eq(addr, ch, ch_mode_status, eq_stage[ch]);
-			printf("CH[%d]-Stage update : eq_stage = %d\n",ch,eq_stage[ch]);
+				nvp6124_sharpness_eq(addr, ch, ch_mode_status, eq_stage[ch]);
+				nvp6124_peaking_eq(addr, ch, ch_mode_status, eq_stage[ch]);
+				nvp6124_ctigain_eq(addr, ch, ch_mode_status, eq_stage[ch]);
+				nvp6124_c_filter_eq(addr, ch, ch_mode_status, eq_stage[ch]);
+				nvp6124_ugain_eq(addr, ch, ch_mode_status, eq_stage[ch]);
+				nvp6124_vgain_eq(addr, ch, ch_mode_status, eq_stage[ch]);
+			}
 		}
-
-		check_c_stage_back[ch] = check_c_stage[ch];
-		check_y_stage_back[ch] = check_y_stage[ch];
 		vidmode_back[ch] = vidmode[ch];
-
-		I2C_UnLock();
 	}
+	I2C_UnLock();
 }
 
 static void nvp6124_video_mode_init(int addr, int video_mode)
@@ -2468,6 +3306,7 @@ static void nvp6114_audio_config(int ICAddr)
 
 	if(ICAddr == HDAHD_ADDR0) {
 		HDDVR_i2c_WriteByte(ICAddr, 0x07, 0x80); //8K/16bit Rec Master
+		HDDVR_i2c_WriteByte(ICAddr, 0x39, 0x01);
 #if   (defined(GPIO_PLAT_TYPE7) || defined(GPIO_PLAT_TYPE12))
 		HDDVR_i2c_WriteByte(ICAddr, 0x13, 0x80); //8K/16bit PB  Master
 		HDDVR_i2c_WriteByte(ICAddr, 0xd5, 0x00);
@@ -2480,6 +3319,7 @@ static void nvp6114_audio_config(int ICAddr)
 	}
 	else {
 		HDDVR_i2c_WriteByte(ICAddr, 0x07, 0x00); //8K/16bit Rec Slave
+		HDDVR_i2c_WriteByte(ICAddr, 0x39, 0x81);
 		HDDVR_i2c_WriteByte(ICAddr, 0x13, 0x00); //8K/16bit PB  Slave
 		HDDVR_i2c_WriteByte(ICAddr, 0x23, 0x00); //Mix Out Select PB Input
 		HDDVR_i2c_WriteByte(ICAddr, 0xd5, 0x01);
@@ -2656,6 +3496,7 @@ int HDAHD_Probe(void)
 			HDAHD_SYID[ii] = AD_AHD_NVP6114A;
 			Result = 0;
 		}
+		HDAHD_REVID[ii]  = HDDVR_i2c_ReadByte(HDAHD_ADDR[ii], 0xF5);
 		I2C_UnLock();
 	}
 
@@ -2731,6 +3572,8 @@ int HDAHD_Init(int Fmt)
 		|| (AD_AHD_NVP6114A == HDAHD_SYID[0])) {
 			nvp6124_video_mode_init(tmpAddr, gHDAHD_WorkStandard);
 		}
+
+		chipon297MHz[ii] = 0;
 	}
 
 	nvp6114_audio_init();
@@ -2967,7 +3810,7 @@ int HDAHD_InputFormatCheck(int Chnl)
 	return tmpFormatVal;
 }
 
-int HDAHD_InputFormatSetting(int Chnl, HD_INPUT_FORMAT Frmt)
+int HDAHD_InputFormatSetting(int Chnl, HD_INPUT_FORMAT Ifrmt, HD_OUTPUT_FORMAT Ofrmt)
 {
 	int tmpRealChip;
 	int tmpRealChnl;
@@ -2977,15 +3820,24 @@ int HDAHD_InputFormatSetting(int Chnl, HD_INPUT_FORMAT Frmt)
 		return -1;
 	}
 
-	if((Frmt >= HDVIDEO_CNT) || (Frmt < HDVIDEO_UNKNOWN)) {
+	if((Ifrmt >= HDVIDEO_CNT) || (Ifrmt < HDVIDEO_UNKNOWN)) {
 		return -1;
+	}
+
+	if(Ifrmt == HDVIDEO_SD960H25FPS)
+	{
+		Ofrmt = NVP6124_OUTMODE_2MUX_HD;
+	}
+	else
+	{
+		Ofrmt = NVP6124_OUTMODE_2MUX_FHD_X;
 	}
 
 	if(AD_AHD_NVP6114 == HDAHD_SYID[0]) {
 		int tmpVT;
 		unsigned char tmpVC;
 
-		switch(Frmt) {
+		switch(Ifrmt) {
 		default:
 		case HDVIDEO_HD1080P30FPS:
 		case HDVIDEO_HD720P60FPS:
@@ -3031,7 +3883,8 @@ int HDAHD_InputFormatSetting(int Chnl, HD_INPUT_FORMAT Frmt)
 	|| (AD_AHD_NVP6114A == HDAHD_SYID[0])) {
 		int ViMode = 0;
 
-		switch(Frmt) {
+		switch(Ifrmt) {
+		default:
 		case HDVIDEO_SD720H25FPS:
 		case HDVIDEO_SD720H30FPS:
 		case HDVIDEO_SD960H25FPS:
@@ -3046,14 +3899,13 @@ int HDAHD_InputFormatSetting(int Chnl, HD_INPUT_FORMAT Frmt)
 		case HDVIDEO_HD720P60FPS:
 			ViMode = NVP6124_VI_720P_5060;
 			break;		
-		default:
 		case HDVIDEO_HD1080P25FPS:
 		case HDVIDEO_HD1080P30FPS:
 			ViMode = NVP6124_VI_1080P_2530;
 			break;
 		}
 		nvp6124_videoformat[Chnl] = ViMode;
-		nvp6124_each_mode_setting(tmpRealAddr, tmpRealChnl, gHDAHD_WorkStandard, Frmt);
+		nvp6124_each_mode_setting(tmpRealAddr, tmpRealChnl, gHDAHD_WorkStandard, Ifrmt);
 
 #if defined _EXT_HDDVR_LITE
 		if(AD_AHD_NVP6124 == HDAHD_SYID[0]) {
@@ -3061,9 +3913,13 @@ int HDAHD_InputFormatSetting(int Chnl, HD_INPUT_FORMAT Frmt)
 			nvp6124_outport_2mux(tmpRealAddr, ViPort[(tmpRealChnl%4)/2], ViMode);
 		}
 		if(AD_AHD_NVP6114A == HDAHD_SYID[0]) {
-			int ViPort[] = {0, 1, 1, 0};
-
-			nvp6114a_outport_2mux(tmpRealAddr, ViPort[(tmpRealChnl%4)], ViMode);
+			int ViPort[] = {0, 1};
+			//nvp6114a_outport_2mux(tmpRealAddr, ViPort[(tmpRealChnl%4)/2], ViMode);
+			//nvp6114a_outport_setmode(tmpRealAddr, 0, Ofrmt, 1, ViMode);
+			//nvp6114a_outport_setmode(tmpRealAddr, 1, Ofrmt, 0, ViMode);
+			//nvp6114a_outport_setmode(tmpRealAddr, 1, Ofrmt, 0);
+			//nvp6114a_outport_setmode(tmpRealAddr, 0, Ofrmt, 1);
+			nvp6114a_outport_setmode(tmpRealAddr, ViPort[(tmpRealChnl%4)/2], Ofrmt, 0, ViMode);
 		}
 #else 
 		nvp6124_outport_1mux(tmpRealAddr, tmpRealChnl);
@@ -3105,6 +3961,344 @@ int HDAHD_VideoLossFix(int Chnl, int Fix)
 		}
 	}
 
+	return 0;
+}
+
+#define AHD2_PEL_D0		0x20
+#define AHD2_FHD_D0		0x10
+#define AHD2_PEL_OUT	0x0C
+#define AHD2_FHD_OUT	0x09
+
+#define BANK0		0
+#define BANK1		1
+#define BANK2		2
+#define BANK3		3
+#define BANK4		4
+#define BANK5		5
+#define BANK6		6
+#define BANK7		7
+#define BANK8		8
+#define BANK9		9
+
+#define PACKET_MODE	0x0B
+
+const unsigned char NVP6124_1080P_2530_tab[HDDVR_UTC_CMD_COUNT][4] = {
+						0x00, 0x00, 0x00, 0x00,
+						0x02, 0x00, 0x00, 0x00,
+						0x00, 0x08, 0x00, 0x32,
+						0x00, 0x10, 0x00, 0x32,
+						0x00, 0x04, 0x32, 0x00,
+						0x00, 0x02, 0x32, 0x00,
+						0x00, 0x03, 0x00, 0x3F,
+						0x02, 0x00, 0x00, 0x00,
+						0x04, 0x00, 0x00, 0x00,
+						0x01, 0x00, 0x00, 0x00,
+						0x00, 0x80, 0x00, 0x00,
+						0x00, 0x40, 0x00, 0x00,
+						0x00, 0x20, 0x00, 0x00
+};
+
+const unsigned char NVP6124_720P_2530_tab[HDDVR_UTC_CMD_COUNT][4] = {
+						0x00, 0x00, 0x00, 0x00,
+						0x40, 0x00, 0x00, 0x00,
+						0x00, 0x10, 0x10, 0x4C,
+						0x00, 0x08, 0x08, 0x4C,
+						0x00, 0x20, 0x20, 0x00,
+						0x00, 0x40, 0x40, 0x00,
+						0x00, 0xC0, 0xC0, 0xFA,
+						0x40, 0x00, 0x00, 0x00,
+						0x20, 0x00, 0x00, 0x00,
+						0x80, 0x00, 0x00, 0x00,
+						0x00, 0x01, 0x01, 0x00,
+						0x00, 0x02, 0x02, 0x00,
+						0x00, 0x04, 0x04, 0x00
+};
+
+const unsigned char NVP6124_VI_SD_tab[HDDVR_UTC_CMD_COUNT][4] = {
+						0x00, 0x00, 0x00, 0x00,
+						0x40, 0x00, 0x00, 0x00,
+						0x00, 0x10, 0x00, 0x4C,
+						0x00, 0x08, 0x00, 0x4C,
+						0x00, 0x20, 0x4C, 0x00,
+						0x00, 0x40, 0x4C, 0x00,
+						0x00, 0xC0, 0x00, 0xFA,
+						0x40, 0x00, 0x00, 0x00,
+						0x20, 0x00, 0x00, 0x00,
+						0x80, 0x00, 0x00, 0x00,
+						0x00, 0x01, 0x00, 0x00,
+						0x00, 0x02, 0x00, 0x00,
+						0x00, 0x04, 0x00, 0x00
+};
+
+unsigned char nvp6124_PelcoCommand(int addr, int chnl, unsigned char command)
+{
+	int i;
+	//usleep( 20*1000 );
+	if(nvp6124_videoformat[chnl] == NVP6124_VI_SD) {
+		I2C_InLock();
+		HDDVR_i2c_WriteByte( addr, 0xFF, BANK3+(chnl/2) );
+		for(i=0;i<4;i++) {
+			HDDVR_i2c_WriteByte( addr, AHD2_PEL_D0+i+(((chnl)%2)*0x80), 0x00 );
+		}
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_OUT+(((chnl)%2)*0x80), 0x01 );
+		I2C_UnLock();
+
+		usleep( 30*1000 );
+
+		I2C_InLock();
+		HDDVR_i2c_WriteByte( addr, 0xFF, BANK3+(chnl/2) );
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_OUT+(((chnl)%2)*0x80), 0x00 );
+		I2C_UnLock();
+
+		usleep( 60*1000 );
+
+		I2C_InLock();
+		HDDVR_i2c_WriteByte( addr, 0xFF, BANK3+(chnl/2) );
+		for(i=0;i<4;i++) {
+			HDDVR_i2c_WriteByte( addr,
+				AHD2_PEL_D0+i+(((chnl)%2)*0x80),
+				NVP6124_VI_SD_tab[command][i] );
+		}
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_OUT+(((chnl)%2)*0x80), 0x01 );
+		I2C_UnLock();
+
+		usleep( 30*1000 );
+
+		I2C_InLock();
+		HDDVR_i2c_WriteByte( addr, 0xFF, BANK3+(chnl/2) );
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_OUT+(((chnl)%2)*0x80), 0x00 );
+		I2C_UnLock();
+
+		usleep( 60*1000 );
+	}
+	else if(nvp6124_videoformat[chnl] == NVP6124_VI_720P_2530
+			|| nvp6124_videoformat[chnl] == NVP6124_VI_720P_5060)
+	{
+		I2C_InLock();
+		HDDVR_i2c_WriteByte( addr, 0xFF, BANK3+(chnl/2) );
+		for(i=0;i<4;i++) {
+			HDDVR_i2c_WriteByte( addr, AHD2_PEL_D0+i+(((chnl)%2)*0x80), 0x00 );
+		}
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_OUT+(((chnl)%2)*0x80), 0x01 );
+		I2C_UnLock();
+
+		usleep( 30*1000 );
+
+		I2C_InLock();
+		HDDVR_i2c_WriteByte( addr, 0xFF, BANK3+(chnl/2) );
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_OUT+(((chnl)%2)*0x80), 0x00 );
+		I2C_UnLock();
+
+		usleep( 60*1000 );
+
+		I2C_InLock();
+		HDDVR_i2c_WriteByte( addr, 0xFF, BANK3+(chnl/2) );
+		for(i=0;i<4;i++) {
+			HDDVR_i2c_WriteByte( addr,
+				AHD2_PEL_D0+i+(((chnl)%2)*0x80),
+				NVP6124_720P_2530_tab[command][i] );
+		}
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_OUT+(((chnl)%2)*0x80), 0x01 );
+		I2C_UnLock();
+
+		usleep( 30*1000 );
+
+		I2C_InLock();
+		HDDVR_i2c_WriteByte( addr, 0xFF, BANK3+(chnl/2) );
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_OUT+(((chnl)%2)*0x80), 0x00 );
+		I2C_UnLock();
+
+		usleep( 60*1000 );
+	}
+	else if(nvp6124_videoformat[chnl] == NVP6124_VI_1080P_2530)
+	{
+		I2C_InLock();
+		HDDVR_i2c_WriteByte( addr, 0xFF, BANK3+(chnl/2) );
+		for(i=0;i<4;i++) {
+			HDDVR_i2c_WriteByte( addr, AHD2_FHD_D0+i+(((chnl)%2)*0x80), 0x00 );
+		}
+		HDDVR_i2c_WriteByte( addr, AHD2_FHD_OUT+(((chnl)%2)*0x80), 0x08 );
+		I2C_UnLock();
+
+		usleep( 25*1000 );
+
+		I2C_InLock();
+		HDDVR_i2c_WriteByte( addr, 0xFF, BANK3+(chnl/2) );
+		HDDVR_i2c_WriteByte( addr, AHD2_FHD_OUT+(((chnl)%2)*0x80), 0x00 );
+		I2C_UnLock();
+
+		usleep( 25*1000 );
+
+		I2C_InLock();
+		HDDVR_i2c_WriteByte( addr, 0xFF, BANK3+(chnl/2) );
+		for(i=0;i<4;i++) {
+			HDDVR_i2c_WriteByte( addr,
+				AHD2_FHD_D0+i+(((chnl)%2)*0x80),
+				NVP6124_1080P_2530_tab[command][i] );
+		}
+		HDDVR_i2c_WriteByte( addr, AHD2_FHD_OUT+(((chnl)%2)*0x80), 0x08 );
+		I2C_UnLock();
+
+		usleep( 25*1000 );
+
+		I2C_InLock();
+		HDDVR_i2c_WriteByte( addr, 0xFF, BANK3+(chnl/2) );
+		HDDVR_i2c_WriteByte( addr, AHD2_FHD_OUT+(((chnl)%2)*0x80), 0x00 );
+		I2C_UnLock();
+
+		usleep( 25*1000 );
+	}
+
+	return 0;
+}
+void nvp6124_utc_InitByChnlVFmt(int addr, int chnl, int ChnlVideoformat, int video_mode)
+{
+	if(ChnlVideoformat == NVP6124_VI_SD)
+	{
+		HDDVR_i2c_WriteByte( addr, 0xFF, BANK3+(chnl/2) );
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_BAUD+((chnl%2)*0x80), video_mode%2? 0x1B:0x1B );
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_LINE+((chnl%2)*0x80), video_mode%2? 0x0E:0x0E );
+		HDDVR_i2c_WriteByte( addr, PACKET_MODE+((chnl%2)*0x80), 0x06 );
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_SYNC+((chnl%2)*0x80), video_mode%2? 0xa0:0xd4 );
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_SYNC+1+((chnl%2)*0x80), video_mode%2?0x05:0x05 );
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_EVEN+((chnl%2)*0x80), 0x01 );
+	}
+	else if(ChnlVideoformat == NVP6124_VI_720P_2530 || ChnlVideoformat == NVP6124_VI_720P_5060)
+	{
+		HDDVR_i2c_WriteByte( addr, 0xFF, BANK3+(chnl/2) );
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_BAUD+((chnl%2)*0x80), 0x0D );
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_LINE+((chnl%2)*0x80), video_mode%2? 0x0D:0x0E );
+		HDDVR_i2c_WriteByte( addr, PACKET_MODE+((chnl%2)*0x80), 0x06 );
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_SYNC+((chnl%2)*0x80), video_mode%2? 0x40:0x80 );
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_SYNC+1+((chnl%2)*0x80), video_mode%2?0x05:0x00 );
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_EVEN+((chnl%2)*0x80), 0x00 );
+	}
+	else if(ChnlVideoformat == NVP6124_VI_1080P_2530)
+	{
+		HDDVR_i2c_WriteByte( addr, 0xFF, BANK3+(chnl/2) );
+		HDDVR_i2c_WriteByte( addr, AHD2_FHD_BAUD+((chnl%2)*0x80), 0x0E );
+		HDDVR_i2c_WriteByte( addr, AHD2_FHD_LINE+((chnl%2)*0x80), video_mode%2? 0x0E:0x0E );
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_SYNC+((chnl%2)*0x80), video_mode%2? 0x14:0x14 );
+		HDDVR_i2c_WriteByte( addr, AHD2_FHD_LINES+((chnl%2)*0x80), 0x03 );
+		HDDVR_i2c_WriteByte( addr, AHD2_FHD_BYTE+((chnl%2)*0x80), 0x03 );
+		HDDVR_i2c_WriteByte( addr, AHD2_FHD_MODE+((chnl%2)*0x80), 0x10 );
+		HDDVR_i2c_WriteByte( addr, ((chnl%2)*0x80)+0x0E, 0x00 );
+		HDDVR_i2c_WriteByte( addr, AHD2_PEL_EVEN+((chnl%2)*0x80), 0x00 );
+	}
+	else
+	{
+		printf("HDDVR UTC Init Error, ch_mode Error\n");
+	}
+
+}
+
+int HDAHD_UTC_Init(int video_mode)
+{
+	int i, ch;
+	int tmpRealChip;
+	int tmpRealChnl;
+	int tmpRealAddr;
+	int addr = 0x60;
+
+	current_videomode = video_mode;
+
+	I2C_InLock();
+
+	HDDVR_i2c_WriteByte( addr, 0xFF, BANK1 );
+	if(HDAHD_SYID[0] == AD_AHD_NVP6124)
+	{
+		HDDVR_i2c_WriteByte( addr, 0xBD, 0xD0 );
+		HDDVR_i2c_WriteByte( addr, 0xBE, 0xDD );
+		HDDVR_i2c_WriteByte( addr, 0xBF, 0x0D );
+	}
+	else if(HDAHD_SYID[0] == AD_AHD_NVP6114A)
+	{
+		//HDAHD_WriteI2C( addr, 0xBC, 0,0xDD,1 );
+		//HDAHD_WriteI2C( addr, 0xBD, 0,0xED,1 );
+		HDDVR_i2c_WriteByte( addr, 0xBC, 0xEE );
+		HDDVR_i2c_WriteByte( addr, 0xBD, 0xEE );
+	}
+
+	for(i=0;i<4;i++) {
+		HDDVR_i2c_WriteByte( addr, 0xFF, BANK5+i );
+
+		if(nvp6124_videoformat[i] == NVP6124_VI_720P_2530
+			|| nvp6124_videoformat[i] == NVP6124_VI_720P_5060
+			|| nvp6124_videoformat[i] == NVP6124_VI_1080P_2530
+			||nvp6124_videoformat[i] == NVP6124_VI_SD)
+		{
+			HDDVR_i2c_WriteByte( addr, 0x7C, 0x11 );
+		}
+		else
+			printf("nvp6124_pelco_coax_mode ch[%d] error\n", i);
+
+	}
+
+	for(i=0; i<4; i++) {
+		current_videoformat[i] = nvp6124_videoformat[i];
+
+		if(0 != HDAHD_ChipGetMap(i, &tmpRealChip, &tmpRealChnl, &tmpRealAddr)) {
+			return HDVIDEO_UNKNOWN;
+		}
+
+		nvp6124_utc_InitByChnlVFmt(tmpRealAddr, tmpRealChnl,
+								nvp6124_videoformat[i], video_mode);
+	}
+
+	I2C_UnLock();
+
+	//HDDVR_UTC_Send(0, HDDVR_UTC_CMD_RESET);
+
+	return 0;
+}
+
+int HDAHD_UTC_Send(int Chnl, HDDVR_UTC_CMD Cmd)
+{
+	int Revalue = 0;
+
+	int tmpRealChip;
+	int tmpRealChnl;
+	int tmpRealAddr;
+
+	if(0 != HDAHD_ChipGetMap(Chnl, &tmpRealChip, &tmpRealChnl, &tmpRealAddr)) {
+		return HDVIDEO_UNKNOWN;
+	}
+
+	if(current_videoformat[Chnl] != nvp6124_videoformat[Chnl])
+	{
+		current_videoformat[Chnl] = nvp6124_videoformat[Chnl];
+		nvp6124_utc_InitByChnlVFmt(tmpRealAddr, tmpRealChnl,
+								nvp6124_videoformat[Chnl], current_videomode);
+	}
+
+	switch(Cmd)	{
+		case HDDVR_UTC_CMD_RESET:
+		case HDDVR_UTC_CMD_ENTER:
+		case HDDVR_UTC_CMD_UP:
+		case HDDVR_UTC_CMD_DOWN:
+		case HDDVR_UTC_CMD_LEFT:
+		case HDDVR_UTC_CMD_RIGHT:
+		case HDDVR_UTC_CMD_OSD:
+		case HDDVR_UTC_CMD_IRIS_OPEN:
+		case HDDVR_UTC_CMD_IRIS_CLOSE:
+		case HDDVR_UTC_CMD_FOCUS_NEAR:
+		case HDDVR_UTC_CMD_FOCUS_FAR:
+		case HDDVR_UTC_CMD_ZOOM_WIDE:
+		case HDDVR_UTC_CMD_ZOOM_TELE:
+			nvp6124_PelcoCommand(tmpRealAddr, tmpRealChnl, Cmd);
+			break;
+
+		default:
+	        printf("invalid UTC cmd[%x]\n", Cmd);
+			Revalue = -1;
+			break;
+	}
+
+	return Revalue;
+}
+
+int HDAHD_UTC_Exit()
+{
 	return 0;
 }
 

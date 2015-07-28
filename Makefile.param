@@ -8,7 +8,8 @@ MV := mv -v
 MKIMAGE := mkimage -A arm -O linux
 MAKE := make
 
-PRJ_PATH  := /src/nfs/hidvr-git
+#PRJ_PATH  := /src/nfs/hidvr-git
+PRJ_PATH  := /home/green/winshare/work/hidvr-git
 PRJ_INC_PATH := $(PRJ_PATH)/common
 
 SDK_PATH := $(PRJ_PATH)/sdk/sdk
