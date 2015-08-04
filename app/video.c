@@ -134,7 +134,8 @@ void video_ScreenInit(void)
 #endif
 		switch(enRes) {
 		default:
-		case VGA_800x600:   stVgaPubAttr.enIntfSync = VO_OUTPUT_800x600_60;   break;
+		//case VGA_800x600:   stVgaPubAttr.enIntfSync = VO_OUTPUT_800x600_60;   break;
+		case VGA_800x600:   stVgaPubAttr.enIntfSync = VO_OUTPUT_720P60;   break;
 		case VGA_1024x768:  stVgaPubAttr.enIntfSync = VO_OUTPUT_1024x768_60;  break;
 #if defined(_JA7216NC)
 		case VGA_1280x1024: stVgaPubAttr.enIntfSync = VO_OUTPUT_1024x768_60; break;

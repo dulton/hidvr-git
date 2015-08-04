@@ -137,7 +137,8 @@ JDK_BOOL JDK_resol_get_wh(JDK_RESOLUTION_TYPE resol, JDK_UINT32 *width, JDK_UINT
 JDK_BOOL JDK_vga_resol_get_wh(JDK_VGA_RESOLUTION_TYPE resol, JDK_UINT32 *width, JDK_UINT32 *height)
 {
 	JDK_UINT32 r_wh[][2] = {
-			{800, 600},
+			//{800, 600},
+			{1280, 720},
 			{1024, 768},
 			{1280, 1024},
 			{1366, 768},

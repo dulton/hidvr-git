@@ -656,7 +656,8 @@ JDK_BOOL hi_3521_vo_init(JDK_MONITOR_TYPE monitor, JDK_STANDARD_MODE standard,
 
 		switch(dispResol) {
 			default:
-			case JDK_VGA_800x600:	voPubAttr.enIntfSync = VO_OUTPUT_800x600_60;   break;
+			//case JDK_VGA_800x600:	voPubAttr.enIntfSync = VO_OUTPUT_800x600_60;   break;
+			case JDK_VGA_800x600:	voPubAttr.enIntfSync = VO_OUTPUT_720P60;   break;
 			case JDK_VGA_1024x768:	voPubAttr.enIntfSync = VO_OUTPUT_1024x768_60;  break;
 #if defined(_JA7216NC)
 			case JDK_VGA_1280x1024: voPubAttr.enIntfSync = VO_OUTPUT_1024x768_60; break;
