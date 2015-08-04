@@ -450,8 +450,8 @@ int DVR_Init()
 	{
 	default:
 	case VGA_800x600:
-		nVGAW = 1280;//800;
-		nVGAH = 720;//600;
+		nVGAW = 800;
+		nVGAH = 600;
 		break;
 #if defined(_JA7216NC)
 	case VGA_1024x768:
@@ -468,19 +468,11 @@ int DVR_Init()
 		nVGAW = 1024;
 		nVGAH = 768;
 		break;
-	case VGA_1280x1024:
+	case VGA_1280x720:
 		nVGAW = 1280;
-		nVGAH = 720;// 1024;
+		nVGAH = 720;
 		break;
 #endif
-	case VGA_1366x768:
-		nVGAW = 1366;
-		nVGAH = 768;
-		break;
-	case VGA_1440x900:
-		nVGAW = 1440;
-		nVGAH = 900;
-		break;
 	case VGA_1920x1080P50Hz:
 	case VGA_1920x1080P60Hz:
 		nVGAW = 1920;

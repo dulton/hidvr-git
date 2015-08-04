@@ -134,16 +134,13 @@ void video_ScreenInit(void)
 #endif
 		switch(enRes) {
 		default:
-		//case VGA_800x600:   stVgaPubAttr.enIntfSync = VO_OUTPUT_800x600_60;   break;
-		case VGA_800x600:   stVgaPubAttr.enIntfSync = VO_OUTPUT_720P60;   break;
+		case VGA_800x600:   stVgaPubAttr.enIntfSync = VO_OUTPUT_800x600_60;   break;
 		case VGA_1024x768:  stVgaPubAttr.enIntfSync = VO_OUTPUT_1024x768_60;  break;
 #if defined(_JA7216NC)
-		case VGA_1280x1024: stVgaPubAttr.enIntfSync = VO_OUTPUT_1024x768_60; break;
+		case VGA_1280x720: stVgaPubAttr.enIntfSync = VO_OUTPUT_720P60; break;
 #else
-		case VGA_1280x1024: stVgaPubAttr.enIntfSync = VO_OUTPUT_1280x1024_60;  break;
+		case VGA_1280x720: stVgaPubAttr.enIntfSync = VO_OUTPUT_720P60;  break;
 #endif
-		case VGA_1366x768:  stVgaPubAttr.enIntfSync = VO_OUTPUT_1366x768_60;  break;
-		case VGA_1440x900:  stVgaPubAttr.enIntfSync = VO_OUTPUT_1440x900_60;  break;
 #if   defined(SDK_PLATFORM_HI3521) || defined(SDK_PLATFORM_HI3531)
 		case VGA_1920x1080P50Hz:   stVgaPubAttr.enIntfSync = VO_OUTPUT_1080P50; break;
 		case VGA_1920x1080P60Hz:   stVgaPubAttr.enIntfSync = VO_OUTPUT_1080P60; break;
