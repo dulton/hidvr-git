@@ -139,7 +139,7 @@ JDK_BOOL JDK_vga_resol_get_wh(JDK_VGA_RESOLUTION_TYPE resol, JDK_UINT32 *width, 
 	JDK_UINT32 r_wh[][2] = {
 			{800, 600},
 			{1024, 768},
-			{1280, 720},
+			{1280, 1024},
 			{1366, 768},
 			{1440, 900},
 			{1920, 1080},
@@ -211,33 +211,6 @@ JDK_BOOL JDK_GET_SIBLING_CHN(JDK_UINT32 thiz_chn, JDK_VI_MUX_MODE muxMode,  JDK_
 	}
 	//printf("\r\n");
 	return JDK_TRUE;
-}
-
-JDK_BOOL JDK_is_all_sibling_chns_close_2MUX(JDK_UINT32 chn, JDK_INT32 viDev)
-{
-	int ii;
-	JDK_UINT32 tmpChnl;
-	JDK_UINT32 openFlag = 0;
-
-	tmpChnl = viDev * 2;
-
-	if ( chn%2 == 1)
-	{
-		tmpChnl -= 1;
-	}
-	else
-	{
-		tmpChnl += 1;
-	}
-
-	if (JDK_CHN_STATE(tmpChnl) == JDK_CHN_STATE_BNC)
-	{
-		return JDK_FALSE;
-	}
-	else
-	{
-		return JDK_TRUE;
-	}
 }
 
 JDK_BOOL JDK_is_all_sibling_chns_close(JDK_UINT32 thiz_chn, JDK_VI_MUX_MODE muxMode)

@@ -18,7 +18,6 @@
 #include "hi_common.h"
 #include "hi_comm_video.h"
 #include "hi_comm_venc.h"
-#include "hi_comm_vb.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -68,8 +67,8 @@ HI_S32 HI_MPI_VENC_GetH264SliceSplit(VENC_CHN VeChn, VENC_PARAM_H264_SLICE_SPLIT
 HI_S32 HI_MPI_VENC_SetH264InterPred(VENC_CHN VeChn, const VENC_PARAM_H264_INTER_PRED_S *pstH264InterPred);
 HI_S32 HI_MPI_VENC_GetH264InterPred(VENC_CHN VeChn, VENC_PARAM_H264_INTER_PRED_S *pstH264InterPred);
 
-HI_S32 HI_MPI_VENC_SetH264IntraPred(VENC_CHN VeChn, const VENC_PARAM_H264_INTRA_PRED_S *pstH264IntraPred);
-HI_S32 HI_MPI_VENC_GetH264IntraPred(VENC_CHN VeChn, VENC_PARAM_H264_INTRA_PRED_S *pstH264IntraPred);
+HI_S32 HI_MPI_VENC_SetH264IntraPred(VENC_CHN VeChn, const VENC_PARAM_H264_INTRA_PRED_S *pstH264InterPred);
+HI_S32 HI_MPI_VENC_GetH264IntraPred(VENC_CHN VeChn, VENC_PARAM_H264_INTRA_PRED_S *pstH264InterPred);
 
 HI_S32 HI_MPI_VENC_SetH264Trans(VENC_CHN VeChn, const VENC_PARAM_H264_TRANS_S *pstH264Trans);
 HI_S32 HI_MPI_VENC_GetH264Trans(VENC_CHN VeChn, VENC_PARAM_H264_TRANS_S *pstH264Trans);
@@ -126,14 +125,6 @@ HI_S32 HI_MPI_VENC_GetRcPriority(VENC_CHN VeChn, VENC_RC_PRIORITY_E *penRcPriori
     
 HI_S32 HI_MPI_VENC_SetLostFrameStrategy(VENC_CHN VeChn, VENC_PARAM_LOSTFRM_S *pstLostFrmParam);
 HI_S32 HI_MPI_VENC_GetLostFrameStrategy(VENC_CHN VeChn, VENC_PARAM_LOSTFRM_S *pstLostFrmParam);
-
-HI_S32 HI_MPI_VENC_AttachVbPool(VENC_CHN VeChn, VB_POOL hVbPool);
-HI_S32 HI_MPI_VENC_DetachVbPool(VENC_CHN VeChn);
-
-HI_S32 HI_MPI_VENC_SetH264VideoSignal(VENC_CHN VeChn, const VENC_PARAM_H264_VIDEO_SIGNAL_S *pstH264VideoSignal);
-HI_S32 HI_MPI_VENC_GetH264VideoSignal(VENC_CHN VeChn, VENC_PARAM_H264_VIDEO_SIGNAL_S *pstH264VideoSignal);
-
-
 #ifdef __cplusplus
 #if __cplusplus
 }

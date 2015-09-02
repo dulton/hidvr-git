@@ -39,8 +39,8 @@ HI_S32 HI_MPI_VI_EnableUserPic(VI_CHN ViChn);
 HI_S32 HI_MPI_VI_DisableUserPic(VI_CHN ViChn);
 
 /* These functions are used to start the cascade mode. VI cascade mode can work normally Only when they have been called */
-HI_S32 HI_MPI_VI_EnableCascade(VI_DEV ViDev);
-HI_S32 HI_MPI_VI_DisableCascade(VI_DEV ViDev);
+HI_S32 HI_MPI_VI_EnableCascade(VI_DEV ViDev); 
+HI_S32 HI_MPI_VI_DisableCascade(VI_DEV ViDev); 
 HI_S32 HI_MPI_VI_EnableCascadeChn(VI_CHN ViChn);
 HI_S32 HI_MPI_VI_DisableCascadeChn(VI_CHN ViChn);
 
@@ -79,9 +79,6 @@ HI_S32 HI_MPI_VI_GetChnLuma(VI_CHN ViChn, VI_CHN_LUM_S *pstLuma);
 
 HI_S32 HI_MPI_VI_EnableChn422to420(VI_CHN ViChn);
 HI_S32 HI_MPI_VI_DisableChn422to420(VI_CHN ViChn);
-
-HI_S32 HI_MPI_VI_SetChnScanMode(VI_CHN ViChn, VI_SCAN_MODE_E enScanMode);
-HI_S32 HI_MPI_VI_GetChnScanMode(VI_CHN ViChn, VI_SCAN_MODE_E *penScanMode);
 
 /* for 3520D use */
 HI_S32 HI_MPI_VI_SetPortMode(VI_DEV ViDev, const VI_PORTMODE_E enPortMode);

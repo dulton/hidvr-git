@@ -1132,9 +1132,17 @@ static void video_OutputInit()
 			stVgaLayerAttr.stDispRect.u32Width  = 1024;
 			stVgaLayerAttr.stDispRect.u32Height = 768;
 			break;
-		case VGA_1280x720:
+		case VGA_1280x1024:
 			stVgaLayerAttr.stDispRect.u32Width  = 1280;
-			stVgaLayerAttr.stDispRect.u32Height = 720;
+			stVgaLayerAttr.stDispRect.u32Height = 1024;
+			break;
+		case VGA_1366x768:
+			stVgaLayerAttr.stDispRect.u32Width  = 1366;
+			stVgaLayerAttr.stDispRect.u32Height = 768;
+			break;
+		case VGA_1440x900:
+			stVgaLayerAttr.stDispRect.u32Width  = 1440;
+			stVgaLayerAttr.stDispRect.u32Height = 900;
 			break;
 		case VGA_1920x1080P50Hz:
 		case VGA_1920x1080P60Hz:

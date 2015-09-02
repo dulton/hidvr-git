@@ -659,10 +659,12 @@ JDK_BOOL hi_3521_vo_init(JDK_MONITOR_TYPE monitor, JDK_STANDARD_MODE standard,
 			case JDK_VGA_800x600:	voPubAttr.enIntfSync = VO_OUTPUT_800x600_60;   break;
 			case JDK_VGA_1024x768:	voPubAttr.enIntfSync = VO_OUTPUT_1024x768_60;  break;
 #if defined(_JA7216NC)
-			case JDK_VGA_1280x720: voPubAttr.enIntfSync = VO_OUTPUT_720P60; break;
+			case JDK_VGA_1280x1024: voPubAttr.enIntfSync = VO_OUTPUT_1024x768_60; break;
 #else
-			case JDK_VGA_1280x720: voPubAttr.enIntfSync = VO_OUTPUT_720P60;  break;
+			case JDK_VGA_1280x1024: voPubAttr.enIntfSync = VO_OUTPUT_1280x1024_60;  break;
 #endif
+			case JDK_VGA_1366x768:	voPubAttr.enIntfSync = VO_OUTPUT_1366x768_60;  break;
+			case JDK_VGA_1440x900:	voPubAttr.enIntfSync = VO_OUTPUT_1440x900_60;  break;
 			case JDK_VGA_1920x1080P50Hz:   voPubAttr.enIntfSync = VO_OUTPUT_1080P50; break;
 			case JDK_VGA_1920x1080P60Hz:   voPubAttr.enIntfSync = VO_OUTPUT_1080P60; break;
 		}
@@ -1106,8 +1108,7 @@ JDK_BOOL hi_3521_vi_chn_init(int Chnl, lpJDK_VIN_ARG arg, HD_INPUT_FORMAT Frmt)
 		
 		if (JDK_SOC_CHIP_IS(JDK_HI_SOC_3520D)) {
 #ifdef _EXT_HDDVR_LITE
-			//if(((2 == tmpRealChnl) || (6 == tmpRealChnl)) && (tmpRefSizW >= JDK_VRES_SIZE_W_HD720P)) {
-			if( tmpRefSizW >= JDK_VRES_SIZE_W_HD720P ) {
+			if(((2 == tmpRealChnl) || (6 == tmpRealChnl)) && (tmpRefSizW >= JDK_VRES_SIZE_W_HD720P)) {
 				tmpPicFmt = PIXEL_FORMAT_YUV_SEMIPLANAR_422;
 			}
 #endif
@@ -1132,18 +1133,8 @@ JDK_BOOL hi_3521_vi_chn_init(int Chnl, lpJDK_VIN_ARG arg, HD_INPUT_FORMAT Frmt)
         tmpChnAttr.stCapRect.u32Width   = tmpRefSizW;
         tmpChnAttr.stCapRect.u32Height  = tmpRefSizH;
         tmpChnAttr.enCapSel             = VI_CAPSEL_BOTH;
-
-		if(Frmt == HDVIDEO_SD960H25FPS)
-		{
-			tmpChnAttr.stDestSize.u32Width  = tmpRefSizW >> 1;
-			tmpChnAttr.stDestSize.u32Height = tmpRefSizH;
-		}
-		else
-		{
-			tmpChnAttr.stDestSize.u32Width  = tmpRefSizW;
-			tmpChnAttr.stDestSize.u32Height = tmpRefSizH;
-
-		}
+        tmpChnAttr.stDestSize.u32Width  = tmpRefSizW;
+        tmpChnAttr.stDestSize.u32Height = tmpRefSizH;
         tmpChnAttr.enPixFormat          = tmpPicFmt;
         tmpChnAttr.bMirror              = HI_FALSE;
         tmpChnAttr.bFlip                = HI_FALSE;
@@ -1153,13 +1144,6 @@ JDK_BOOL hi_3521_vi_chn_init(int Chnl, lpJDK_VIN_ARG arg, HD_INPUT_FORMAT Frmt)
         tmpChnAttr.s32FrameRate         = (tmpFps > 30) ? (tmpFps /2) : tmpFps;;
 
 		JDK_TRACE("vi chn(%u, %u) size: %d x %d init", Chnl, tmpRealChnl, tmpRefSizW, tmpRefSizH);
-
-		if(Frmt == HDVIDEO_SD960H25FPS){
-			HI_MPI_VI_SetChnScanMode(tmpRealChnl, VI_SCAN_INTERLACED);
-		}
-		else{
-			HI_MPI_VI_SetChnScanMode(tmpRealChnl, VI_SCAN_PROGRESSIVE);
-		}
 
         jdk_hi_return_val_if_fail( HI_MPI_VI_SetChnAttr(tmpRealChnl*nViChnStp, &tmpChnAttr), JDK_FALSE);
 		if(tmpPicFmt == PIXEL_FORMAT_YUV_SEMIPLANAR_422) {
@@ -1334,10 +1318,7 @@ static JDK_BOOL hi_3521_bnc_vi_open(JDK_UINT32 chn, lpJDK_VIN_ARG arg)
 		playImgH = imgH;
 	}
 
-	//if ((chn % arg->muxMode) == 0) { /* make sure the vi-device of all channels in a group init only once */
-	//	jdk_return_val_if_fail(hi_3521_vi_dev_init(viDev, arg, viResol), JDK_FALSE);
-	//}
-	if(JDK_is_all_sibling_chns_close(chn, arg->muxMode)){
+	if ((chn % arg->muxMode) == 0) { /* make sure the vi-device of all channels in a group init only once */
 		jdk_return_val_if_fail(hi_3521_vi_dev_init(viDev, arg, viResol), JDK_FALSE);
 	}
 
@@ -1451,11 +1432,9 @@ static JDK_BOOL hi_3521_vi_close(JDK_UINT32 chn)
 	
 	if (JDK_CHN_STATE(chn) == JDK_CHN_STATE_BNC) {
 		jdk_return_val_if_fail(hi_3521_vi_chn_deinit(chn), JDK_FALSE);
-		JDK_CHN_SET_STATE(chn, JDK_CHN_STATE_NULL);
 		hi_3521_vpss_group_deinit(chn);
 		hi_3521_vpss_group_deinit(chn + JDK_ACTIVE_CAM());
 	} else if (JDK_CHN_STATE(chn) == JDK_CHN_STATE_NET) {
-		JDK_CHN_SET_STATE(chn, JDK_CHN_STATE_NULL);
 		jdk_return_val_if_fail(hi_3521_vi_chn_deinit(chn), JDK_FALSE);
 		jdk_return_val_if_fail(hi_3521_vpss_group_deinit(chn + JDK_ACTIVE_CAM()), JDK_FALSE);
 	}else if (JDK_CHN_STATE(chn) == JDK_CHN_STATE_NULL) {

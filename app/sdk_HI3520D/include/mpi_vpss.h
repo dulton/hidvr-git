@@ -40,9 +40,6 @@ HI_S32 HI_MPI_VPSS_ResetGrp(VPSS_GRP VpssGrp);
 HI_S32 HI_MPI_VPSS_EnableChn(VPSS_GRP VpssGrp, VPSS_CHN s32VpssChnl);
 HI_S32 HI_MPI_VPSS_DisableChn(VPSS_GRP VpssGrp, VPSS_CHN s32VpssChnl);
 
-HI_S32 HI_MPI_VPSS_EnableBackupFrame(VPSS_GRP VpssGrp);
-HI_S32 HI_MPI_VPSS_DisableBackupFrame(VPSS_GRP VpssGrp);
-
 HI_S32 HI_MPI_VPSS_GetGrpAttr(VPSS_GRP VpssGrp, VPSS_GRP_ATTR_S *pstGrpAttr);
 HI_S32 HI_MPI_VPSS_SetGrpAttr(VPSS_GRP VpssGrp, VPSS_GRP_ATTR_S *pstGrpAttr);
 

@@ -434,19 +434,6 @@ typedef struct hiVENC_PARAM_H264E_VUI_S
     HI_S32 fixed_frame_rate_flag;       /* default value: n/a. {0,1} */
 }VENC_PARAM_H264_VUI_S;
 
-typedef struct hiVENC_PARAM_H264E_VIDEO_SIGNAL_S
-{
-    HI_U8  video_signal_type_present_flag ;   /* default value: 0. If 1, video singnal info will be encoded into vui. {0,1} */
-    HI_U8  video_format ;                     /* default value: n/a. [0,5]. */
-    HI_U8  video_full_range_flag;             /* default value: n/a. [0,1}. */
-    HI_U8  colour_description_present_flag ;  /* default value: n/a. [0,1} */
-    HI_U8  colour_primaries ;				  /* default value: n/a. [1,9], 0/10~255 is reserved */
-    HI_U8  transfer_characteristics;          /* default value: n/a. [1,15],0/16~255 is reserved */
-    HI_U8  matrix_coefficients;               /* default value: n/a. [0,10],11~255 is reserved */		
-}VENC_PARAM_H264_VIDEO_SIGNAL_S;
-
-
-
 typedef struct hiVENC_PARAM_JPEG_S
 {
     HI_U32 u32Qfactor;         /*image quality :[1,99]*/
